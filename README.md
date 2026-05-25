@@ -1,2 +1,2 @@
-# KAN-Smart
-Asesor Scheduler
+# kan-smart
+asesor scheduler
