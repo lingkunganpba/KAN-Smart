@@ -231,6 +231,7 @@
                             </div>
 
                             <input type="hidden" id="selectedLpkValue">
+                            <input type="hidden" id="selectedNoLpkValue">
 
                             <div id="lpkDropdownList" class="autocomplete-dropdown divide-y divide-slate-900 shadow-xl hidden"></div>
 
@@ -700,7 +701,7 @@
 
                     id: item.id,
 
-                    lpk_name: item.no_lpk || "LPK Target",
+                    lpk_name: item.nama_lpk || item.no_lpk || "LPK Target",
 
                     asesor_id: item.asesor_id,
 
@@ -773,6 +774,8 @@
                     document.getElementById("lpkSearchInput").value = row['NAMA LABORATORIUM'];
 
                     document.getElementById("selectedLpkValue").value = row['NAMA LABORATORIUM'];
+
+                    document.getElementById("selectedNoLpkValue").value = row['NO AKREDITASI'] || '';
 
                     dropdown.classList.add("hidden");
 
@@ -1005,7 +1008,7 @@
 
                     temporarySchedules.push({
 
-                        no_lpk: lpkName,
+                        no_lpk: document.getElementById("selectedNoLpkValue").value, nama_lpk: lpkName,
 
                         asesor_id: parseInt(aseId),
 
@@ -1041,7 +1044,7 @@
 
             document.getElementById("bulkScheduleForm").reset();
 
-            document.getElementById("selectedLpkValue").value = "";
+            document.getElementById("selectedLpkValue").value = ""; document.getElementById("selectedNoLpkValue").value = "";
 
             // FIX #2 & #3: Reset state centang dan panel setelah submit berhasil
             selectedAsesorIds.clear();
@@ -1360,7 +1363,7 @@
 
             if (type === "CREATE") {
 
-                log = `📥 [DB INSERT SUCCESS]: Sukses menginput data baru ke tabel 'jadwal_asesor'.\n📍 Target: ${schObj.no_lpk}\n📍 Asesor: ${schObj.nama_asesor}`;
+                log = `📥 [DB INSERT SUCCESS]: Sukses menginput data baru ke tabel 'jadwal_asesor'.\n📍 Target: ${schObj.nama_lpk}\n📍 Asesor: ${schObj.nama_asesor}`;
 
             } else if (type === "CONFIRM") {
 
