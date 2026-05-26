@@ -159,7 +159,7 @@
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentUser = null;
 
-        // --- ENGINE PROSES LOGIN ---
+       // --- ENGINE PROSES LOGIN ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -173,25 +173,29 @@
             errorDiv.classList.add('hidden');
 
             try {
-                // Mengubah .single() menjadi .limit(1) untuk menghindari error strict server
+                // Ambil data menggunakan query standar
                 const { data, error } = await supabase
                     .from('master_pic')
                     .select('*')
                     .eq('username', usernameInput)
                     .eq('password', passwordInput)
-                    .eq('status_aktif', true)
-                    .limit(1);
+                    .eq('status_aktif', true);
 
-                if (error) throw error;
+                // Jika ada error koneksi/API dari Supabase, tangkap dan munculkan alert langsung
+                if (error) {
+                    alert("Koneksi Supabase Ditolak: " + error.message + " (Kode: " + error.code + ")");
+                    throw error;
+                }
                 
                 if (!data || data.length === 0) {
                     throw new Error("Username atau Password Anda salah. Silakan periksa kembali.");
                 }
 
-                currentUser = data[0]; // Ambil data baris pertama
+                currentUser = data[0]; 
                 initApp();
 
             } catch (err) {
+                // Munculkan teks eror di atas kotak login
                 errorDiv.innerText = err.message;
                 errorDiv.classList.remove('hidden');
                 btnLogin.disabled = false;
