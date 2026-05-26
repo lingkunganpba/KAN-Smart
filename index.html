@@ -301,7 +301,7 @@
         let activePICUser = null;
         let activeRole = 'staff';
         let scheduleDatabase = [];
-        let fetchedMasterAsesors = []; // Perbaikan Awal: Diinisiasi agar tidak crash saat rendering form
+        let fetchedMasterAsesors = []; 
         let currentCalendarDate = new Date();
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -352,11 +352,18 @@
             document.getElementById("loginForm").reset();
         }
 
+        // --- SINKRONISASI KOLOM HURUF KECIL 'nama' ---
         async function fetchMasterAsesors() {
-            const { data, error } = await _supabase.from('master_asesor').select('id, Nama').order('Nama', { ascending: true });
+            const { data, error } = await _supabase
+                .from('master_asesor')
+                .select('id, nama')
+                .order('nama', { ascending: true });
+                
             if (!error && data) {
                 fetchedMasterAsesors = data;
                 renderBulkAsesorList(fetchedMasterAsesors);
+            } else {
+                console.error("Gagal mengambil data master_asesor:", error);
             }
         }
 
@@ -378,7 +385,6 @@
             }
         }
 
-        // --- FIXED: PERBAIKAN STRUKTUR QUERY LPK CLOUD ---
         async function handleLpkLiveSearch() {
             const query = document.getElementById("lpkSearchInput").value.trim();
             const dropdown = document.getElementById("lpkDropdownList");
@@ -392,7 +398,7 @@
             const { data, error } = await _supabase
                 .from('master_lpk')
                 .select('"NO AKREDITASI", "NAMA LABORATORIUM"')
-                .or(`NAMA LABORATORIUM.ilike.%${query}%,NO AKREDITASI.ilike.%${query}%`) // Perbaikan: Menghilangkan tanda titik typo
+                .or(`"NAMA LABORATORIUM".ilike.%${query}%,"NO AKREDITASI".ilike.%${query}%`)
                 .limit(7);
 
             if (error || !data || data.length === 0) {
@@ -415,19 +421,30 @@
             dropdown.classList.remove("hidden");
         }
 
+        // --- PENCARIAN SENSITIVITAS KOLOM BARU 'nama' ---
         function filterAsesorList() {
             const keyword = document.getElementById("asesorSearchInput").value.toLowerCase().trim();
-            const filtered = fetchedMasterAsesors.filter(ase => ase.NAMA.toLowerCase().includes(keyword));
+            
+            if (!Array.isArray(fetchedMasterAsesors)) {
+                fetchedMasterAsesors = [];
+            }
+
+            const filtered = fetchedMasterAsesors.filter(ase => {
+                const namaAsesor = ase.nama ? ase.nama.toLowerCase() : "";
+                return namaAsesor.includes(keyword);
+            });
+            
             renderBulkAsesorList(filtered);
         }
 
+        // --- RENDER ELEMENT DENGAN PROPERTI 'nama' ---
         function renderBulkAsesorList(list) {
             const container = document.getElementById("bulkAsesorContainer");
             container.innerHTML = "";
             const gStart = document.getElementById("globalDateStart").value || "";
             const gEnd = document.getElementById("globalDateEnd").value || "";
 
-            if (list.length === 0) {
+            if (!list || list.length === 0) {
                 container.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-4 italic">Asesor tidak ditemukan.</div>`;
                 return;
             }
@@ -437,7 +454,7 @@
                     <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-800 text-xs">
                         <label class="flex items-center gap-2 font-bold text-white">
                             <input type="checkbox" value="${ase.id}" class="bulk-checkbox w-3.5 h-3.5 accent-blue-500 rounded cursor-pointer">
-                            <span>${ase.NAMA}</span>
+                            <span>${ase.nama}</span>
                         </label>
                         <div class="grid grid-cols-2 gap-2 pl-5 pt-1.5">
                             <input type="date" id="start-ase-${ase.id}" value="${gStart}" class="bg-slate-950 border border-slate-800 rounded p-1 text-[10px] text-slate-300 date-start-field text-center">
@@ -464,6 +481,7 @@
             });
         }
 
+        // --- PENYIMPANAN LOGIKA KE JADWAL DENGAN PROPERTI 'nama' ---
         async function handleBulkFormSubmit(e) {
             e.preventDefault();
             const lpkName = document.getElementById("selectedLpkValue").value.trim();
@@ -492,7 +510,7 @@
                     temporarySchedules.push({
                         nama_lpk: lpkName,
                         asesor_id: aseId,
-                        nama_asesor: asesorObj.NAMA,
+                        nama_asesor: asesorObj.nama,
                         tanggal_mulai: startVal,
                         tanggal_selesai: endVal,
                         status: "Dihubungi",
