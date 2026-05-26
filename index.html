@@ -3,151 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAN Asesor Scheduler - Production v5.2</title>
+    <title>KAN Asesor Scheduler - Production v6.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .autocomplete-items {
             position: absolute;
-            border: 1px solid #d4d4d4;
-            border-bottom: none;
+            border: 1px solid #e2e8f0;
             border-top: none;
             z-index: 99;
             top: 100%;
             left: 0;
             right: 0;
+            max-height: 200px;
+            overflow-y: auto;
         }
         .autocomplete-items div {
-            padding: 10px;
+            padding: 8px 12px;
             cursor: pointer;
             background-color: #fff;
-            border-bottom: 1px solid #d4d4d4;
+            border-bottom: 1px solid #f1f5f9;
         }
         .autocomplete-items div:hover {
-            background-color: #e9e9e9;
+            background-color: #f8fafc;
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+<body class="bg-slate-50 font-sans text-slate-800">
 
     <div id="login-page" class="flex min-h-screen items-center justify-center bg-slate-900 px-4">
-        <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-xl">
+        <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl border border-slate-100">
             <div class="text-center mb-6">
+                <div class="inline-flex p-3 bg-blue-50 text-blue-600 rounded-xl mb-3">
+                    <i class="fa-solid fa-calendar-check text-2xl"></i>
+                </div>
                 <h2 class="text-2xl font-bold text-slate-800">Sistem Penjadwalan Asesor</h2>
-                <p class="text-sm text-gray-500">Komite Akreditasi Nasional (KAN)</p>
+                <p class="text-sm text-slate-500">Komite Akreditasi Nasional (KAN)</p>
             </div>
-            <div id="login-error" class="hidden mb-4 rounded bg-red-100 p-3 text-sm text-red-700"></div>
+            <div id="login-error" class="hidden mb-4 rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-700 border border-red-100"></div>
             <form id="login-form" class="space-y-4" onsubmit="event.preventDefault();">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700">Username PIC</label>
-                    <input type="text" id="login-username" required class="mt-1 w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none">
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Username PIC</label>
+                    <input type="text" id="login-username" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:border-blue-500 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700">Password</label>
-                    <input type="password" id="login-password" required class="mt-1 w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none">
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:border-blue-500 focus:outline-none">
                 </div>
-                <button type="submit" id="btn-login" class="w-full rounded bg-blue-600 p-2.5 font-semibold text-white hover:bg-blue-700 transition">Masuk Sistem</button>
+                <button type="submit" id="btn-login" class="w-full rounded-xl bg-blue-600 p-2.5 font-bold text-sm text-white hover:bg-blue-700 transition cursor-pointer shadow-sm">
+                    Masuk Sistem <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+                </button>
             </form>
         </div>
     </div>
 
-    <div id="main-app" class="hidden">
-        <nav class="bg-blue-900 px-6 py-4 text-white flex flex-wrap justify-between items-center shadow-md">
-            <div>
-                <h1 class="text-xl font-bold">KAN SCHEDULER</h1>
-                <p class="text-xs text-blue-200" id="user-info-display">Loading user...</p>
+    <div id="main-app" class="hidden min-h-screen">
+        <nav class="bg-slate-900 px-6 py-4 text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-600 rounded-lg text-white">
+                    <i class="fa-solid fa-network-wired text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-md font-bold tracking-wide">KAN SCHEDULER</h1>
+                    <p class="text-[11px] text-slate-400 font-medium" id="user-info-display">Menghubungkan akun...</p>
+                </div>
             </div>
-            <button onclick="logout()" class="rounded bg-red-600 px-4 py-2 text-sm font-semibold hover:bg-red-700 transition">Keluar</button>
+            <button onclick="logout()" class="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold hover:bg-red-700 transition shadow-sm cursor-pointer">
+                <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
+            </button>
         </nav>
 
-        <div class="mx-auto max-w-7xl p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <main class="mx-auto max-w-7xl p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <div class="lg:col-span-1 space-y-6">
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <h3 class="text-lg font-bold border-b pb-2 mb-4 text-slate-800">Input Penjadwalan Baru</h3>
+                <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+                    <h3 class="text-sm font-bold border-b border-slate-100 pb-3 mb-4 text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-plus text-blue-600"></i> Input Penjadwalan Baru
+                    </h3>
                     <form id="schedule-form" class="space-y-4">
                         <div class="relative">
-                            <label class="block text-sm font-semibold text-gray-700">Cari LPK / Laboratorium</label>
-                            <input type="text" id="search-lpk" placeholder="Ketik nama laboratorium..." required autocomplete="off" class="mt-1 w-full rounded border border-gray-300 p-2 focus:outline-none focus:border-blue-500">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cari LPK / Laboratorium</label>
+                            <input type="text" id="search-lpk" placeholder="Ketik nama laboratorium..." required autocomplete="off" class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:outline-none focus:border-blue-500">
                             <input type="hidden" id="selected-no-lpk">
                             <input type="hidden" id="selected-nama-lpk">
-                            <div id="lpk-autocomplete-list" class="autocomplete-items shadow-lg rounded"></div>
+                            <div id="lpk-autocomplete-list" class="autocomplete-items shadow-lg rounded-xl border border-slate-100"></div>
                         </div>
 
                         <div class="relative">
-                            <label class="block text-sm font-semibold text-gray-700">Cari Nama Asesor</label>
-                            <input type="text" id="search-asesor" placeholder="Ketik nama asesor..." required autocomplete="off" class="mt-1 w-full rounded border border-gray-300 p-2 focus:outline-none focus:border-blue-500">
-                            <div id="asesor-autocomplete-list" class="autocomplete-items shadow-lg rounded"></div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cari Nama Asesor</label>
+                            <input type="text" id="search-asesor" placeholder="Ketik nama asesor..." required autocomplete="off" class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:outline-none focus:border-blue-500">
+                            <div id="asesor-autocomplete-list" class="autocomplete-items shadow-lg rounded-xl border border-slate-100"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kompetensi Bidang</label>
+                            <input type="text" id="schedule-kompetensi" placeholder="misal: Kalibrasi, Medik, Lingkungan" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:outline-none focus:border-blue-500">
                         </div>
 
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700">Tgl Mulai</label>
-                                <input type="date" id="date-start" required class="mt-1 w-full rounded border border-gray-300 p-2 text-sm focus:outline-none focus:border-blue-500">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tgl Mulai</label>
+                                <input type="date" id="date-start" required class="w-full rounded-xl border border-slate-200 p-2.5 text-xs focus:outline-none focus:border-blue-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700">Tgl Selesai</label>
-                                <input type="date" id="date-end" required class="mt-1 w-full rounded border border-gray-300 p-2 text-sm focus:outline-none focus:border-blue-500">
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tgl Selesai</label>
+                                <input type="date" id="date-end" required class="w-full rounded-xl border border-slate-200 p-2.5 text-xs focus:outline-none focus:border-blue-500">
                             </div>
                         </div>
 
-                        <button type="submit" id="btn-save-schedule" class="w-full rounded bg-green-600 p-2.5 font-semibold text-white hover:bg-green-700 transition">Simpan Jadwal Tim</button>
+                        <button type="submit" id="btn-save-schedule" class="w-full rounded-xl bg-blue-600 p-2.5 font-bold text-xs text-white hover:bg-blue-700 transition shadow-sm cursor-pointer">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Jadwal Tim
+                        </button>
                     </form>
                 </div>
 
-                <div id="admin-management-section" class="hidden rounded-lg bg-white p-6 shadow border-t-4 border-amber-500">
-                    <h3 class="text-lg font-bold border-b pb-2 mb-4 text-amber-700">👑 Manajemen Akun PIC (Khusus Admin)</h3>
-                    <div id="pic-error" class="hidden mb-2 rounded bg-red-100 p-2 text-xs text-red-700"></div>
-                    <div id="pic-success" class="hidden mb-2 rounded bg-green-100 p-2 text-xs text-green-700"></div>
+                <div id="admin-management-section" class="hidden rounded-2xl bg-white p-6 shadow-sm border-t-4 border-amber-500 border-x border-b border-slate-100">
+                    <h3 class="text-sm font-bold border-b border-slate-100 pb-3 mb-4 text-amber-700 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-user-shield"></i> Kelola Akun PIC Staff
+                    </h3>
+                    <div id="pic-error" class="hidden mb-2 rounded-xl bg-red-50 p-2 text-[11px] font-medium text-red-700 border border-red-100"></div>
+                    <div id="pic-success" class="hidden mb-2 rounded-xl bg-green-50 p-2 text-[11px] font-medium text-green-700 border border-green-100"></div>
                     
-                    <form id="pic-form" class="space-y-3 text-sm">
+                    <form id="pic-form" class="space-y-3 text-xs">
                         <div>
-                            <label class="block font-semibold text-gray-700">Username</label>
-                            <input type="text" id="pic-username" placeholder="misal: husein / danu" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none">
+                            <label class="block font-bold text-slate-500 uppercase">Username</label>
+                            <input type="text" id="pic-username" placeholder="husein / danu" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-700">Password</label>
-                            <input type="text" id="pic-password" placeholder="Masukkan password" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none">
+                            <label class="block font-bold text-slate-500 uppercase">Password</label>
+                            <input type="text" id="pic-password" placeholder="Password akun" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-700">Nama Lengkap PIC</label>
-                            <input type="text" id="pic-fullname" placeholder="Nama Lengkap Staff" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none">
+                            <label class="block font-bold text-slate-500 uppercase">Nama Lengkap PIC</label>
+                            <input type="text" id="pic-fullname" placeholder="Nama Lengkap" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-700">Role Akses</label>
-                            <input type="text" id="pic-role" placeholder="Ketik: admin atau staff" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none text-lowercase">
+                            <label class="block font-bold text-slate-500 uppercase">Role Akses</label>
+                            <select id="pic-role" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none bg-white">
+                                <option value="staff">Staff Wilayah</option>
+                                <option value="admin">Admin Pusat</option>
+                            </select>
                         </div>
-                        <button type="submit" class="w-full rounded bg-amber-600 p-2 font-semibold text-white hover:bg-amber-700 transition">Buat / Update Akun PIC</button>
+                        <button type="submit" class="w-full rounded-lg bg-amber-600 p-2 font-bold text-white hover:bg-amber-700 transition cursor-pointer">
+                            <i class="fa-solid fa-user-plus mr-1"></i> Simpan Akun PIC
+                        </button>
                     </form>
 
                     <div class="mt-4">
-                        <p class="font-bold text-xs text-gray-500 uppercase mb-2">Daftar Akun PIC Aktif</p>
-                        <div id="pic-list-container" class="max-h-40 overflow-y-auto space-y-1.5 border p-2 bg-gray-50 rounded">
-                        </div>
+                        <p class="font-bold text-[10px] text-slate-400 uppercase mb-2 tracking-wider">Daftar PIC Terdaftar</p>
+                        <div id="pic-list-container" class="max-h-36 overflow-y-auto space-y-1.5 border border-slate-100 p-2 bg-slate-50 rounded-xl"></div>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-2 space-y-6">
-                <div class="rounded-lg bg-white p-6 shadow">
-                    <h3 class="text-lg font-bold border-b pb-2 mb-4 text-slate-800">Daftar Distribusi Tugas Live (Database 3)</h3>
+                <section class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Filter Nama/No LPK</label>
+                                <input type="text" id="filterLpk" oninput="renderTable()" placeholder="Ketik nama atau nomor LPK..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Filter Waktu Pelaksanaan</label>
+                                <select id="filterWaktu" onchange="renderTable()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-blue-500 bg-white">
+                                    <option value="ALL">Semua Waktu</option>
+                                    <option value="2026-05">Mei 2026</option>
+                                    <option value="2026-06">Juni 2026</option>
+                                    <option value="2026-07">Juli 2026</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="pt-4 md:pt-0">
+                            <button onclick="exportTableToCSV()" class="w-full md:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-file-excel text-sm"></i> Export Data (.CSV)
+                            </button>
+                        </div>
+                    </div>
+     
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-700 border-b">
-                                    <th class="p-3">LPK / Laboratorium</th>
-                                    <th class="p-3">Nama Asesor</th>
-                                    <th class="p-3">Pelaksanaan</th>
-                                    <th class="p-3">Oleh PIC</th>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase font-semibold">
+                                    <th class="px-4 py-3">Asesor Ditugaskan</th>
+                                    <th class="px-4 py-3">Nama LPK Target</th>
+                                    <th class="px-4 py-3">Kompetensi</th>
+                                    <th class="px-4 py-3">Rentang Tanggal Kerja</th>
+                                    <th class="px-4 py-3 text-center">Dibuat Oleh</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-center">Aksi Manajemen</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-jadwal-body" class="divide-y">
-                            </tbody>
+                            <tbody id="scheduleTableBody" class="divide-y divide-slate-100 text-xs">
+                                </tbody>
                         </table>
                     </div>
-                </div>
+                </section>
             </div>
 
+        </div>
+    </main>
+
+    <div id="editPopupModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                <h3 class="text-sm font-bold uppercase tracking-wider"><i class="fa-solid fa-pen-to-square mr-1"></i> Update Jadwal Tugas</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="edit-schedule-form" class="p-5 space-y-4 text-xs">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block font-bold text-slate-500 uppercase">Nama Asesor</label>
+                    <input type="text" id="edit-asesor" required class="mt-1 w-full rounded-xl border border-slate-200 p-2.5">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 uppercase">Kompetensi</label>
+                    <input type="text" id="edit-kompetensi" required class="mt-1 w-full rounded-xl border border-slate-200 p-2.5">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase">Tgl Mulai</label>
+                        <input type="date" id="edit-start" required class="mt-1 w-full rounded-xl border border-slate-200 p-2">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-500 uppercase">Tgl Selesai</label>
+                        <input type="date" id="edit-end" required class="mt-1 w-full rounded-xl border border-slate-200 p-2">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-500 uppercase">Status Penugasan</label>
+                    <select id="edit-status" class="mt-1 w-full rounded-xl border border-slate-200 p-2.5 bg-white">
+                        <option value="Terjadwal">Terjadwal</option>
+                        <option value="Berjalan">Berjalan</option>
+                        <option value="Selesai">Selesai</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full rounded-xl bg-blue-600 p-3 font-bold text-white text-xs hover:bg-blue-700 shadow-sm cursor-pointer transition">
+                    <i class="fa-solid fa-square-check mr-1"></i> Simpan Perubahan Tugas
+                </button>
+            </form>
         </div>
     </div>
 
@@ -155,9 +250,9 @@
         const SUPABASE_URL = "https://ogubeyrmghsyzbzzohfo.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndWJleXJtZ2hzeXpienpvaGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcwODYsImV4cCI6MjA5NTI4MzA4Nn0._p6GCliHPOCg8jYL9fo357AQLr20kQKH2GohXOwulsI"; 
 
-        // PERBAIKAN UTAMA: Mengubah nama objek agar tidak bentrok (crash)
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentUser = null;
+        let globalSchedules = []; // Wadah penampung data untuk Filter Front-End instan
 
         // --- ENGINE PROSES LOGIN ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -214,7 +309,7 @@
 
             setupAutocompleteLPK();
             setupAutocompleteAsesor();
-            loadLiveJadwal();
+            fetchLiveJadwal(); // Ambil master data dari database cloud
             listenRealtimeJadwal();
         }
 
@@ -227,45 +322,249 @@
             document.getElementById('btn-login').innerText = "Masuk Sistem";
         }
 
-        // --- SISTEM PEMBUATAN & REVISI AKUN PIC OLEH ADMIN ---
+        // --- READ: AMBIL DATA JADWAL UTAMA ---
+        async function fetchLiveJadwal() {
+            const { data, error } = await supabaseClient
+                .from('jadwal_asesor')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) return;
+            globalSchedules = data || [];
+            renderTable(); // Lempar ke fungsi filter front-end mantap Anda
+        }
+
+        // --- CORE RENDER & FILTER FRONT-END PILEHAN ANDA ---
+        function renderTable() {
+            const tbody = document.getElementById('scheduleTableBody');
+            const searchFilter = document.getElementById('filterLpk').value.toLowerCase().trim();
+            const timeFilter = document.getElementById('filterWaktu').value;
+
+            tbody.innerHTML = "";
+
+            // Filter data secara live di sisi front-end
+            const filteredData = globalSchedules.filter(j => {
+                const matchLpk = (j.nama_lpk && j.nama_lpk.toLowerCase().includes(searchFilter)) || 
+                                 (j.no_lpk && j.no_lpk.toLowerCase().includes(searchFilter)) ||
+                                 (j.nama_asesor && j.nama_asesor.toLowerCase().includes(searchFilter));
+                
+                let matchTime = true;
+                if (timeFilter !== 'ALL') {
+                    matchTime = (j.tanggal_mulai && j.tanggal_mulai.startsWith(timeFilter)) || 
+                                (j.tanggal_selesai && j.tanggal_selesai.startsWith(timeFilter));
+                }
+                return matchLpk && matchTime;
+            });
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-medium bg-slate-50">Tidak ada distribusi jadwal tugas yang cocok dengan filter.</td></tr>`;
+                return;
+            }
+
+            filteredData.forEach(j => {
+                // Set warna badge status dinamis
+                let statusBadge = `<span class="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full font-bold text-[10px]">Terjadwal</span>`;
+                if (j.status === 'Berjalan') {
+                    statusBadge = `<span class="bg-amber-50 text-amber-700 border border-amber-100 px-2.5 py-1 rounded-full font-bold text-[10px]">Berjalan</span>`;
+                } else if (j.status === 'Selesai') {
+                    statusBadge = `<span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-full font-bold text-[10px]">Selesai</span>`;
+                }
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                row.innerHTML = `
+                    <td class="px-4 py-3 font-semibold text-slate-700"><i class="fa-solid fa-user-tie text-slate-400 mr-1.5"></i>${j.nama_asesor}</td>
+                    <td class="px-4 py-3">
+                        <div class="font-bold text-slate-800">${j.nama_lpk}</div>
+                        <div class="text-[10px] text-slate-400 font-medium">No Akred: ${j.no_lpk}</div>
+                    </td>
+                    <td class="px-4 py-3"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[11px] font-medium">${j.kompetensi || 'Umum'}</span></td>
+                    <td class="px-4 py-3 font-medium">
+                        <div class="flex items-center gap-1 text-slate-600"><i class="fa-solid fa-calendar-days text-slate-300 mr-1"></i>${j.tanggal_mulai} <span class="text-slate-300">s/d</span> ${j.tanggal_selesai}</div>
+                    </td>
+                    <td class="px-4 py-3 text-center text-slate-500 font-semibold">@${j.created_by}</td>
+                    <td class="px-4 py-3 text-center">${statusBadge}</td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openEditModal('${j.id}', '${j.nama_asesor}', '${j.kompetensi || ''}', '${j.tanggal_mulai}', '${j.tanggal_selesai}', '${j.status || 'Terjadwal'}')" class="p-1.5 bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg cursor-pointer transition" title="Edit Tugas">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteJadwal('${j.id}', '${j.nama_lpk}')" class="p-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg cursor-pointer transition" title="Hapus Tugas">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // --- CREATE: INSERT DATA JADWAL BARU ---
+        document.getElementById('schedule-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnSave = document.getElementById('btn-save-schedule');
+            btnSave.disabled = true;
+            btnSave.innerHTML = "<i class='fa-solid fa-spinner animate-spin'></i> Menyimpan...";
+
+            const noLpk = document.getElementById('selected-no-lpk').value || "REG-UNKNOWN";
+            const namaLpk = document.getElementById('selected-nama-lpk').value || document.getElementById('search-lpk').value;
+            const namaAsesor = document.getElementById('search-asesor').value;
+            const kompetensi = document.getElementById('schedule-kompetensi').value;
+            const tglMulai = document.getElementById('date-start').value;
+            const tglSelesai = document.getElementById('date-end').value;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('jadwal_asesor')
+                    .insert([{
+                        no_lpk: noLpk,
+                        nama_lpk: namaLpk,
+                        nama_asesor: namaAsesor,
+                        kompetensi: kompetensi,
+                        tanggal_mulai: tglMulai,
+                        tanggal_selesai: tglSelesai,
+                        status: 'Terjadwal',
+                        created_by: currentUser.username
+                    }]);
+
+                if (error) throw error;
+
+                alert("Jadwal Berhasil Ditambahkan Secara Live!");
+                document.getElementById('schedule-form').reset();
+                fetchLiveJadwal();
+
+            } catch (err) {
+                alert("Gagal menyimpan jadwal: " + err.message);
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = "<i class='fa-solid fa-floppy-disk mr-1'></i> Simpan Jadwal Tim";
+            }
+        });
+
+        // --- UPDATE & DELETE MANAGEMENT ACTION (FITUR MANTAP EDIT) ---
+        function openEditModal(id, asesor, kompetensi, start, end, status) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-asesor').value = asesor;
+            document.getElementById('edit-kompetensi').value = kompetensi;
+            document.getElementById('edit-start').value = start;
+            document.getElementById('edit-end').value = end;
+            document.getElementById('edit-status').value = status;
+            document.getElementById('editPopupModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editPopupModal').classList.add('hidden');
+        }
+
+        document.getElementById('edit-schedule-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const namaAsesor = document.getElementById('edit-asesor').value;
+            const kompetensi = document.getElementById('edit-kompetensi').value;
+            const tglMulai = document.getElementById('edit-start').value;
+            const tglSelesai = document.getElementById('edit-end').value;
+            const status = document.getElementById('edit-status').value;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('jadwal_asesor')
+                    .update({
+                        nama_asesor: namaAsesor,
+                        kompetensi: kompetensi,
+                        tanggal_mulai: tglMulai,
+                        tanggal_selesai: tglSelesai,
+                        status: status
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                closeEditModal();
+                fetchLiveJadwal();
+
+            } catch (err) {
+                alert("Gagal merubah data: " + err.message);
+            }
+        });
+
+        async function deleteJadwal(id, namaLpk) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus seluruh rentang jadwal tugas di ${namaLpk}?`)) return;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('jadwal_asesor')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                fetchLiveJadwal();
+            } catch (err) {
+                alert("Gagal menghapus tugas: " + err.message);
+            }
+        }
+
+        // --- EXPORT DATA: CONVERT MANTAP TABLE TO CSV FILE ---
+        function exportTableToCSV() {
+            if (globalSchedules.length === 0) {
+                alert("Tidak ada data jadwal yang bisa diexport saat ini.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Asesor,Nama LPK,No Akreditasi,Kompetensi,Tanggal Mulai,Tanggal Selesai,PIC pembuat,Status\n";
+
+            globalSchedules.forEach(j => {
+                const row = [
+                    `"${j.nama_asesor || ''}"`,
+                    `"${j.nama_lpk || ''}"`,
+                    `"${j.no_lpk || ''}"`,
+                    `"${j.kompetensi || 'Umum'}"`,
+                    `"${j.tanggal_mulai || ''}"`,
+                    `"${j.tanggal_selesai || ''}"`,
+                    `"${j.created_by || ''}"`,
+                    `"${j.status || 'Terjadwal'}"`
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Daftar_Distribusi_Jadwal_KAN_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- MANAGEMENT PIC FOR ADMIN (UPSERT UTAMA) ---
         document.getElementById('pic-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('pic-username').value.trim().toLowerCase();
             const password = document.getElementById('pic-password').value;
             const nama_lengkap = document.getElementById('pic-fullname').value;
-            const role_akses = document.getElementById('pic-role').value.toLowerCase().trim();
+            const role_akses = document.getElementById('pic-role').value;
             
             const errDiv = document.getElementById('pic-error');
             const succDiv = document.getElementById('pic-success');
-            errDiv.classList.add('hidden');
-            succDiv.classList.add('hidden');
-
-            if (role_akses !== 'admin' && role_akses !== 'staff') {
-                errDiv.innerText = "Gagal: Isian Role harus ditulis 'admin' atau 'staff'!";
-                errDiv.classList.remove('hidden');
-                return;
-            }
+            errDiv.classList.add('hidden'); succDiv.classList.add('hidden');
 
             try {
                 const { error } = await supabaseClient
                     .from('master_pic')
                     .upsert({ 
-                        username: username, 
-                        password: password, 
-                        nama_lengkap: nama_lengkap, 
-                        role: role_akses,
-                        status_aktif: true
+                        username: username, password: password, nama_lengkap: nama_lengkap, 
+                        role: role_akses, status_aktif: true
                     }, { onConflict: 'username' });
 
                 if (error) throw error;
 
-                succDiv.innerText = `Akun @${username} Berhasil Disimpan/Diperbarui!`;
+                succDiv.innerText = `Sukses menyimpan akun @${username}!`;
                 succDiv.classList.remove('hidden');
                 document.getElementById('pic-form').reset();
                 loadAllPIC();
 
             } catch (err) {
-                errDiv.innerText = "Gagal memproses akun: " + err.message;
+                errDiv.innerText = err.message;
                 errDiv.classList.remove('hidden');
             }
         });
@@ -273,31 +572,23 @@
         async function loadAllPIC() {
             const container = document.getElementById('pic-list-container');
             const { data, error } = await supabaseClient.from('master_pic').select('*').order('created_at', { ascending: false });
-            
             if (error || !data) return;
             container.innerHTML = "";
             data.forEach(p => {
                 const item = document.createElement('div');
-                item.className = "text-xs p-1.5 bg-white border rounded flex justify-between items-center";
-                item.innerHTML = `
-                    <div>
-                        <strong class="text-blue-800">@${p.username}</strong> (${p.role || 'belum diatur'})
-                        <div class="text-gray-400">Pass: ${p.password}</div>
-                    </div>
-                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-green-100 text-green-800 font-bold">Aktif</span>
-                `;
+                item.className = "text-[11px] p-1.5 bg-white border border-slate-100 rounded-lg flex justify-between items-center shadow-2xs";
+                item.innerHTML = `<div><strong class="text-blue-700">@${p.username}</strong> (${p.role})<div class="text-slate-400 font-mono">pass: ${p.password}</div></div><span class="px-1.5 py-0.5 rounded text-[9px] bg-green-50 text-green-700 border border-green-100 font-bold">Aktif</span>`;
                 container.appendChild(item);
             });
         }
 
-        // --- AUTOCOMPLETE: PENCARIAN LIVE MASTER LPK ---
+        // --- AUTOCOMPLETE LOGIC: LPK & ASESOR ---
         function setupAutocompleteLPK() {
             const input = document.getElementById('search-lpk');
             const listContainer = document.getElementById('lpk-autocomplete-list');
 
             input.addEventListener('input', async function() {
-                const val = this.value;
-                listContainer.innerHTML = "";
+                const val = this.value; listContainer.innerHTML = "";
                 if (!val || val.length < 2) return;
 
                 const { data, error } = await supabaseClient
@@ -310,7 +601,7 @@
 
                 data.forEach(row => {
                     const b = document.createElement("div");
-                    b.innerHTML = `<strong>${row['NO AKREDITASI'] || '-'}</strong> - ${row['NAMA LABORATORIUM']}`;
+                    b.innerHTML = `<i class="fa-solid fa-vial text-slate-400 mr-1.5 text-xs"></i><strong>${row['NO AKREDITASI'] || '-'}</strong> - ${row['NAMA LABORATORIUM']}`;
                     b.addEventListener("click", function() {
                         input.value = row['NAMA LABORATORIUM'];
                         document.getElementById('selected-no-lpk').value = row['NO AKREDITASI'] || 'REG-UNKNOWN';
@@ -322,14 +613,12 @@
             });
         }
 
-        // --- AUTOCOMPLETE: PENCARIAN LIVE MASTER ASESOR ---
         function setupAutocompleteAsesor() {
             const input = document.getElementById('search-asesor');
             const listContainer = document.getElementById('asesor-autocomplete-list');
 
             input.addEventListener('input', async function() {
-                const val = this.value;
-                listContainer.innerHTML = "";
+                const val = this.value; listContainer.innerHTML = "";
                 if (!val || val.length < 2) return;
 
                 const { data, error } = await supabaseClient
@@ -342,7 +631,7 @@
 
                 data.forEach(row => {
                     const b = document.createElement("div");
-                    b.innerHTML = row['NAMA'];
+                    b.innerHTML = `<i class="fa-solid fa-user-tie text-slate-400 mr-1.5 text-xs"></i>${row['NAMA']}`;
                     b.addEventListener("click", function() {
                         input.value = row['NAMA'];
                         listContainer.innerHTML = "";
@@ -352,80 +641,12 @@
             });
         }
 
-        // --- SIMPAN TRANSAKSI JADWAL ---
-        document.getElementById('schedule-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btnSave = document.getElementById('btn-save-schedule');
-            
-            btnSave.disabled = true;
-            btnSave.innerText = "Mengunci & Menyimpan...";
-
-            const noLpk = document.getElementById('selected-no-lpk').value || "REG-UNKNOWN";
-            const namaLpk = document.getElementById('selected-nama-lpk').value || document.getElementById('search-lpk').value;
-            const namaAsesor = document.getElementById('search-asesor').value;
-            const tglMulai = document.getElementById('date-start').value;
-            const tglSelesai = document.getElementById('date-end').value;
-
-            try {
-                const { error } = await supabaseClient
-                    .from('jadwal_asesor')
-                    .insert([{
-                        no_lpk: noLpk,
-                        nama_lpk: namaLpk,
-                        nama_asesor: namaAsesor,
-                        tanggal_mulai: tglMulai,
-                        tanggal_selesai: tglSelesai,
-                        created_by: currentUser.username
-                    }]);
-
-                if (error) throw error;
-
-                alert("Jadwal Berhasil Tersimpan Secara Live!");
-                document.getElementById('schedule-form').reset();
-
-            } catch (err) {
-                alert("Gagal menyimpan jadwal: " + err.message);
-            } finally {
-                btnSave.disabled = false;
-                btnSave.innerText = "Simpan Jadwal Tim";
-            }
-        });
-
-        // --- STREAMING LIVE DATA JADWAL ---
-        async function loadLiveJadwal() {
-            const tbody = document.getElementById('table-jadwal-body');
-            const { data, error } = await supabaseClient
-                .from('jadwal_asesor')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(50);
-
-            if (error || !data) return;
-
-            tbody.innerHTML = "";
-            data.forEach(j => {
-                const row = document.createElement('tr');
-                row.className = "hover:bg-gray-50 transition";
-                row.innerHTML = `
-                    <td class="p-3">
-                        <div class="font-semibold text-slate-800">${j.nama_lpk}</div>
-                        <div class="text-xs text-gray-400">No Akred: ${j.no_lpk}</div>
-                    </td>
-                    <td class="p-3 font-medium text-gray-700">${j.nama_asesor}</td>
-                    <td class="p-3 text-xs">
-                        <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded font-mono">${j.tanggal_mulai} s/d ${j.tanggal_selesai}</span>
-                    </td>
-                    <td class="p-3 text-xs text-gray-500 font-semibold">@${j.created_by}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
+        // --- REALTIME DATABASE STREAMING ---
         function listenRealtimeJadwal() {
             supabaseClient
                 .channel('schema-db-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'jadwal_asesor' }, (payload) => {
-                    loadLiveJadwal();
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'jadwal_asesor' }, () => {
+                    fetchLiveJadwal();
                 })
                 .subscribe();
         }
