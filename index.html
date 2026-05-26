@@ -173,19 +173,22 @@
             errorDiv.classList.add('hidden');
 
             try {
+                // Mengubah .single() menjadi .limit(1) untuk menghindari error strict server
                 const { data, error } = await supabase
                     .from('master_pic')
                     .select('*')
                     .eq('username', usernameInput)
                     .eq('password', passwordInput)
                     .eq('status_aktif', true)
-                    .single();
+                    .limit(1);
 
-                if (error || !data) {
-                    throw new Error("Username/Password salah atau kolom 'role' belum diisi di Supabase.");
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    throw new Error("Username atau Password Anda salah. Silakan periksa kembali.");
                 }
 
-                currentUser = data;
+                currentUser = data[0]; // Ambil data baris pertama
                 initApp();
 
             } catch (err) {
