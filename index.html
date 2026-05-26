@@ -356,7 +356,7 @@
         async function fetchMasterAsesors() {
             const { data, error } = await _supabase
                 .from('master_asesor')
-                .select('id, nama')
+                .select('ID_asesor, nama')
                 .order('nama', { ascending: true });
                 
             if (!error && data) {
