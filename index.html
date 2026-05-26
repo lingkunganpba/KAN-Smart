@@ -162,6 +162,7 @@
         // --- ENGINE PROSES LOGIN ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            e.stopImmediatePropagation();
             const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
             const passwordInput = document.getElementById('login-password').value;
             const btnLogin = document.getElementById('btn-login');
