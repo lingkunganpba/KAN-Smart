@@ -353,7 +353,7 @@
         }
 
         async function fetchMasterAsesors() {
-            const { data, error } = await _supabase.from('master_asesor').select('id, NAMA').order('NAMA', { ascending: true });
+            const { data, error } = await _supabase.from('master_asesor').select('id, Nama').order('Nama', { ascending: true });
             if (!error && data) {
                 fetchedMasterAsesors = data;
                 renderBulkAsesorList(fetchedMasterAsesors);
