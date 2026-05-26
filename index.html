@@ -1,659 +1,583 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAN Asesor Scheduler - Production v6.0</title>
+    <title>KAN Smart Scheduler v4.1 - Supabase Integrated</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .autocomplete-items {
-            position: absolute;
-            border: 1px solid #e2e8f0;
-            border-top: none;
-            z-index: 99;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .autocomplete-items div {
-            padding: 8px 12px;
-            cursor: pointer;
-            background-color: #fff;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .autocomplete-items div:hover {
-            background-color: #f8fafc;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-    <div id="login-page" class="flex min-h-screen items-center justify-center bg-slate-900 px-4">
-        <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl border border-slate-100">
+    <div id="authContainer" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 px-4">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
             <div class="text-center mb-6">
-                <div class="inline-flex p-3 bg-blue-50 text-blue-600 rounded-xl mb-3">
-                    <i class="fa-solid fa-calendar-check text-2xl"></i>
+                <div class="inline-flex p-3 bg-blue-500/10 text-blue-400 rounded-full mb-3 text-2xl">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800">Sistem Penjadwalan Asesor</h2>
-                <p class="text-sm text-slate-500">Komite Akreditasi Nasional (KAN)</p>
+                <h1 class="text-2xl font-black tracking-tight text-white">KAN Smart Scheduler</h1>
+                <p class="text-xs text-slate-400 mt-1">v4.1 Enterprise Secure Gateway</p>
             </div>
-            <div id="login-error" class="hidden mb-4 rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-700 border border-red-100"></div>
-            <form id="login-form" class="space-y-4" onsubmit="event.preventDefault();">
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Username PIC</label>
-                    <input type="text" id="login-username" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:border-blue-500 focus:outline-none">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Username</label>
+                    <input type="text" id="loginUsername" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Contoh: pic.pusat">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Password</label>
-                    <input type="password" id="login-password" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:border-blue-500 focus:outline-none">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Password</label>
+                    <input type="password" id="loginPassword" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="••••••••">
                 </div>
-                <button type="submit" id="btn-login" class="w-full rounded-xl bg-blue-600 p-2.5 font-bold text-sm text-white hover:bg-blue-700 transition cursor-pointer shadow-sm">
-                    Masuk Sistem <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold p-3 rounded-xl text-sm cursor-pointer transition-colors mt-2 shadow-lg shadow-blue-600/20">
+                    Masuk ke Sistem <i class="fa-solid fa-arrow-right-to-bracket ml-1"></i>
                 </button>
             </form>
         </div>
     </div>
 
-    <div id="main-app" class="hidden min-h-screen">
-        <nav class="bg-slate-900 px-6 py-4 text-white flex justify-between items-center shadow-md">
+    <div id="appContainer" class="hidden min-h-screen flex flex-col">
+        <header class="bg-slate-950/60 backdrop-blur-md border-b border-slate-800 px-6 py-4 sticky top-0 z-40 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-blue-600 rounded-lg text-white">
-                    <i class="fa-solid fa-network-wired text-sm"></i>
-                </div>
-                <div>
-                    <h1 class="text-md font-bold tracking-wide">KAN SCHEDULER</h1>
-                    <p class="text-[11px] text-slate-400 font-medium" id="user-info-display">Menghubungkan akun...</p>
-                </div>
+                <span class="bg-blue-600 text-white font-black text-xs px-2 py-1 rounded">KAN v4.1</span>
+                <h2 class="text-lg font-bold text-white tracking-tight">Control Panel Scheduler</h2>
             </div>
-            <button onclick="logout()" class="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold hover:bg-red-700 transition shadow-sm cursor-pointer">
-                <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
-            </button>
-        </nav>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-xs font-bold text-slate-300" id="displayPicName">-</p>
+                    <p class="text-[10px] text-emerald-400 font-mono flex items-center gap-1 justify-end">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Connected to Supabase
+                    </p>
+                </div>
+                <button onclick="handleLogout()" class="bg-slate-800 hover:bg-red-950 hover:text-red-400 text-slate-400 p-2.5 rounded-xl text-xs transition-all cursor-pointer" title="Keluar">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </header>
 
-        <main class="mx-auto max-w-7xl p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <main class="flex-1 p-6 grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-[1600px] w-full mx-auto">
             
-            <div class="lg:col-span-1 space-y-6">
-                <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-                    <h3 class="text-sm font-bold border-b border-slate-100 pb-3 mb-4 text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-calendar-plus text-blue-600"></i> Input Penjadwalan Baru
+            <div class="space-y-6">
+                <div class="bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl shadow-xs">
+                    <h3 class="text-sm font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-plus text-blue-500"></i> Bulk Scheduling Engine
                     </h3>
-                    <form id="schedule-form" class="space-y-4">
-                        <div class="relative">
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cari LPK / Laboratorium</label>
-                            <input type="text" id="search-lpk" placeholder="Ketik nama laboratorium..." required autocomplete="off" class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:outline-none focus:border-blue-500">
-                            <input type="hidden" id="selected-no-lpk">
-                            <input type="hidden" id="selected-nama-lpk">
-                            <div id="lpk-autocomplete-list" class="autocomplete-items shadow-lg rounded-xl border border-slate-100"></div>
+                    <form id="bulkScheduleForm" onsubmit="handleBulkFormSubmit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-400 mb-1">Target LPK Lembaga</label>
+                            <input type="text" id="selectedLpkValue" required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-blue-500" placeholder="Ketik nama LPK (Contoh: LPK Bahtera Mandiri)">
                         </div>
 
-                        <div class="relative">
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cari Nama Asesor</label>
-                            <input type="text" id="search-asesor" placeholder="Ketik nama asesor..." required autocomplete="off" class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:outline-none focus:border-blue-500">
-                            <div id="asesor-autocomplete-list" class="autocomplete-items shadow-lg rounded-xl border border-slate-100"></div>
+                        <div class="grid grid-cols-2 gap-2 p-3 bg-slate-900/60 border border-slate-800 rounded-xl">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Mulai Bersama</label>
+                                <input type="date" id="globalDateStart" onchange="syncGlobalDatesToAsesors()" class="w-full bg-slate-950 border border-slate-800 rounded p-1.5 text-xs text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">Selesai Bersama</label>
+                                <input type="date" id="globalDateEnd" onchange="syncGlobalDatesToAsesors()" class="w-full bg-slate-950 border border-slate-800 rounded p-1.5 text-xs text-white">
+                            </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Kompetensi Bidang</label>
-                            <input type="text" id="schedule-kompetensi" placeholder="misal: Kalibrasi, Medik, Lingkungan" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus:outline-none focus:border-blue-500">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[11px] font-bold text-slate-400">Pilih & Atur Asesor Mandiri</label>
+                                <input type="text" id="asesorSearchInput" oninput="filterAsesorList()" class="bg-slate-900 text-[10px] px-2 py-0.5 rounded border border-slate-800 w-32" placeholder="Cari nama/skill...">
+                            </div>
+                            <div id="bulkAsesorContainer" class="space-y-2 max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
+                                </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tgl Mulai</label>
-                                <input type="date" id="date-start" required class="w-full rounded-xl border border-slate-200 p-2.5 text-xs focus:outline-none focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tgl Selesai</label>
-                                <input type="date" id="date-end" required class="w-full rounded-xl border border-slate-200 p-2.5 text-xs focus:outline-none focus:border-blue-500">
-                            </div>
-                        </div>
-
-                        <button type="submit" id="btn-save-schedule" class="w-full rounded-xl bg-blue-600 p-2.5 font-bold text-xs text-white hover:bg-blue-700 transition shadow-sm cursor-pointer">
-                            <i class="fa-solid fa-floppy-disk mr-1"></i> Simpan Jadwal Tim
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold p-2.5 rounded-lg cursor-pointer transition-colors">
+                            <i class="fa-solid fa-bolt mr-1"></i> Daftarkan Batch Penugasan
                         </button>
                     </form>
                 </div>
 
-                <div id="admin-management-section" class="hidden rounded-2xl bg-white p-6 shadow-sm border-t-4 border-amber-500 border-x border-b border-slate-100">
-                    <h3 class="text-sm font-bold border-b border-slate-100 pb-3 mb-4 text-amber-700 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-user-shield"></i> Kelola Akun PIC Staff
+                <div id="adminPicManagementSection" class="bg-slate-950/40 border border-slate-800/80 p-5 rounded-2xl hidden">
+                    <h3 class="text-sm font-black text-white uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear text-amber-500"></i> Hak Akses Akun PIC
                     </h3>
-                    <div id="pic-error" class="hidden mb-2 rounded-xl bg-red-50 p-2 text-[11px] font-medium text-red-700 border border-red-100"></div>
-                    <div id="pic-success" class="hidden mb-2 rounded-xl bg-green-50 p-2 text-[11px] font-medium text-green-700 border border-green-100"></div>
-                    
-                    <form id="pic-form" class="space-y-3 text-xs">
-                        <div>
-                            <label class="block font-bold text-slate-500 uppercase">Username</label>
-                            <input type="text" id="pic-username" placeholder="husein / danu" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-500 uppercase">Password</label>
-                            <input type="text" id="pic-password" placeholder="Password akun" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-500 uppercase">Nama Lengkap PIC</label>
-                            <input type="text" id="pic-fullname" placeholder="Nama Lengkap" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block font-bold text-slate-500 uppercase">Role Akses</label>
-                            <select id="pic-role" required class="mt-1 w-full rounded-lg border border-slate-200 p-2 focus:outline-none bg-white">
-                                <option value="staff">Staff Wilayah</option>
-                                <option value="admin">Admin Pusat</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="w-full rounded-lg bg-amber-600 p-2 font-bold text-white hover:bg-amber-700 transition cursor-pointer">
-                            <i class="fa-solid fa-user-plus mr-1"></i> Simpan Akun PIC
+                    <form id="addPicForm" onsubmit="handleCreatePic(event)" class="grid grid-cols-2 gap-2 mb-4">
+                        <input type="text" id="newPicUsername" required placeholder="User PIC Baru" class="bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white">
+                        <input type="password" id="newPicPassword" required placeholder="Pass PIC Baru" class="bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white">
+                        <button type="submit" class="col-span-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold p-1.5 rounded cursor-pointer">
+                            + Daftarkan PIC Baru
                         </button>
                     </form>
-
-                    <div class="mt-4">
-                        <p class="font-bold text-[10px] text-slate-400 uppercase mb-2 tracking-wider">Daftar PIC Terdaftar</p>
-                        <div id="pic-list-container" class="max-h-36 overflow-y-auto space-y-1.5 border border-slate-100 p-2 bg-slate-50 rounded-xl"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="lg:col-span-2 space-y-6">
-                <section class="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Filter Nama/No LPK</label>
-                                <input type="text" id="filterLpk" oninput="renderTable()" placeholder="Ketik nama atau nomor LPK..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Filter Waktu Pelaksanaan</label>
-                                <select id="filterWaktu" onchange="renderTable()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-blue-500 bg-white">
-                                    <option value="ALL">Semua Waktu</option>
-                                    <option value="2026-05">Mei 2026</option>
-                                    <option value="2026-06">Juni 2026</option>
-                                    <option value="2026-07">Juli 2026</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="pt-4 md:pt-0">
-                            <button onclick="exportTableToCSV()" class="w-full md:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer flex items-center justify-center gap-2 transition">
-                                <i class="fa-solid fa-file-excel text-sm"></i> Export Data (.CSV)
-                            </button>
-                        </div>
-                    </div>
-     
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
+                        <table class="w-full text-left text-[11px]">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase font-semibold">
-                                    <th class="px-4 py-3">Asesor Ditugaskan</th>
-                                    <th class="px-4 py-3">Nama LPK Target</th>
-                                    <th class="px-4 py-3">Kompetensi</th>
-                                    <th class="px-4 py-3">Rentang Tanggal Kerja</th>
-                                    <th class="px-4 py-3 text-center">Dibuat Oleh</th>
-                                    <th class="px-4 py-3 text-center">Status</th>
-                                    <th class="px-4 py-3 text-center">Aksi Manajemen</th>
+                                <tr class="border-b border-slate-800 text-slate-400">
+                                    <th class="py-1">Username</th>
+                                    <th class="py-1 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="scheduleTableBody" class="divide-y divide-slate-100 text-xs">
-                                </tbody>
+                            <tbody id="picUserTableBody"></tbody>
                         </table>
                     </div>
-                </section>
+                </div>
             </div>
 
+            <div class="xl:col-span-2 space-y-6">
+                <div class="bg-slate-950/40 border border-slate-800 p-5 rounded-2xl flex flex-col h-full">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeMonth(-1)" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-lg text-xs cursor-pointer"><i class="fa-solid fa-chevron-left"></i></button>
+                            <select id="calMonthSelect" onchange="handleSelectDateChange()" class="bg-slate-800 font-bold border-none rounded-lg p-1.5 text-xs text-white focus:outline-none"></select>
+                            <select id="calYearSelect" onchange="handleSelectDateChange()" class="bg-slate-800 font-bold border-none rounded-lg p-1.5 text-xs text-white focus:outline-none"></select>
+                            <button onclick="changeMonth(1)" class="bg-slate-800 hover:bg-slate-700 p-2 rounded-lg text-xs cursor-pointer"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        <button onclick="jumpToToday()" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                            Hari Ini
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        <div class="py-1 bg-red-950/20 text-red-400 rounded">Ming</div>
+                        <div class="py-1 bg-slate-900/40 rounded">Sen</div>
+                        <div class="py-1 bg-slate-900/40 rounded">Sel</div>
+                        <div class="py-1 bg-slate-900/40 rounded">Rab</div>
+                        <div class="py-1 bg-slate-900/40 rounded">Kam</div>
+                        <div class="py-1 bg-slate-900/40 rounded">Jum</div>
+                        <div class="py-1 bg-slate-900/40 rounded">Sab</div>
+                    </div>
+
+                    <div id="calendarCells" class="grid grid-cols-7 gap-1 flex-1 min-h-[400px]"></div>
+                </div>
+            </div>
+
+            <div class="col-span-1 xl:col-span-3 bg-slate-950/40 border border-slate-800 p-5 rounded-2xl">
+                <div class="flex justify-between items-center flex-wrap gap-4 mb-4">
+                    <h3 class="text-sm font-black text-white uppercase tracking-wider">
+                        <i class="fa-solid fa-receipt text-emerald-500"></i> Log Transparansi Jadwal Terpusat
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <input type="text" id="filterAsesor" oninput="renderTable()" placeholder="Filter Asesor..." class="bg-slate-900 border border-slate-800 text-xs rounded p-1.5 w-36">
+                        <input type="text" id="filterLpk" oninput="renderTable()" placeholder="Filter LPK..." class="bg-slate-900 border border-slate-800 text-xs rounded p-1.5 w-36">
+                        <select id="filterWaktu" onchange="renderTable()" class="bg-slate-900 border border-slate-800 text-xs rounded p-1.5 text-white">
+                            <option value="ALL">Semua Waktu</option>
+                            <option value="2026-05">Mei 2026</option>
+                            <option value="2026-06">Juni 2026</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider font-bold">
+                                <th class="px-4 py-3">Nama Asesor</th>
+                                <th class="px-4 py-3">LPK Target</th>
+                                <th class="px-4 py-3">Klaster</th>
+                                <th class="px-4 py-3">Rentang Tanggal</th>
+                                <th class="px-4 py-3 text-center">Oleh PIC</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3 text-center">Aksi Kontrol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody" class="divide-y divide-slate-800/50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="notificationOverlay" class="fixed bottom-4 right-4 z-50 w-full max-w-sm bg-slate-950/95 border border-blue-500/30 p-4 rounded-xl shadow-2xl hidden animate-slide-up">
+        <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-1.5">
+            <span class="text-xs font-black text-blue-400 tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-terminal animate-pulse"></i> INTERNAL RUNTIME TRANSACTION LOGS
+            </span>
+            <button onclick="closeNotificationOverlay()" class="text-slate-400 hover:text-white text-xs cursor-pointer">&times;</button>
         </div>
-    </main>
+        <div id="notificationPayloadContent" class="text-[11px] font-mono space-y-2 max-h-[180px] overflow-y-auto pr-1 text-slate-300"></div>
+    </div>
 
-    <div id="editPopupModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-            <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
-                <h3 class="text-sm font-bold uppercase tracking-wider"><i class="fa-solid fa-pen-to-square mr-1"></i> Update Jadwal Tugas</h3>
-                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div id="editModal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center hidden px-4">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-sm font-bold text-white uppercase tracking-wider">Aksi Manajemen Detail</h4>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-white cursor-pointer">&times;</button>
             </div>
-            <form id="edit-schedule-form" class="p-5 space-y-4 text-xs">
-                <input type="hidden" id="edit-id">
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase">Nama Asesor</label>
-                    <input type="text" id="edit-asesor" required class="mt-1 w-full rounded-xl border border-slate-200 p-2.5">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase">Kompetensi</label>
-                    <input type="text" id="edit-kompetensi" required class="mt-1 w-full rounded-xl border border-slate-200 p-2.5">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-bold text-slate-500 uppercase">Tgl Mulai</label>
-                        <input type="date" id="edit-start" required class="mt-1 w-full rounded-xl border border-slate-200 p-2">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-slate-500 uppercase">Tgl Selesai</label>
-                        <input type="date" id="edit-end" required class="mt-1 w-full rounded-xl border border-slate-200 p-2">
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-500 uppercase">Status Penugasan</label>
-                    <select id="edit-status" class="mt-1 w-full rounded-xl border border-slate-200 p-2.5 bg-white">
-                        <option value="Terjadwal">Terjadwal</option>
-                        <option value="Berjalan">Berjalan</option>
-                        <option value="Selesai">Selesai</option>
-                    </select>
-                </div>
-                <button type="submit" class="w-full rounded-xl bg-blue-600 p-3 font-bold text-white text-xs hover:bg-blue-700 shadow-sm cursor-pointer transition">
-                    <i class="fa-solid fa-square-check mr-1"></i> Simpan Perubahan Tugas
+            <div id="modalContentDetail" class="text-xs space-y-3 text-slate-300 bg-slate-950 p-4 rounded-xl mb-4 border border-slate-800"></div>
+            <div class="flex gap-2">
+                <button id="btnConfirmAction" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold p-2.5 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-check mr-1"></i> Konfirmasi Penugasan
                 </button>
-            </form>
+                <button id="btnDeleteAction" class="bg-red-950 border border-red-800/40 hover:bg-red-900 text-red-400 text-xs font-bold p-2.5 rounded-lg cursor-pointer">
+                    <i class="fa-solid fa-trash-can"></i> Hapus
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        const SUPABASE_URL = "https://ogubeyrmghsyzbzzohfo.supabase.co"; 
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndWJleXJtZ2hzeXpienpvaGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcwODYsImV4cCI6MjA5NTI4MzA4Nn0._p6GCliHPOCg8jYL9fo357AQLr20kQKH2GohXOwulsI"; 
+        // 1. SUPABASE CLIENT INITIALIZATION (Ganti dengan kredensial asli Anda)
+        const SUPABASE_URL = "YOUR_SUPABASE_URL"; 
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let currentUser = null;
-        let globalSchedules = []; // Wadah penampung data untuk Filter Front-End instan
+        // 2. RUNTIME GLOBAL STATES
+        let activePICUser = null;
+        let scheduleDatabase = [];
+        let currentCalendarDate = new Date();
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-        // --- ENGINE PROSES LOGIN ---
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        const masterAsesors = [
+            { id: 101, name: "Dr. Ir. Hariadi, M.T.", skills: ["Generalist", "Informatika"] },
+            { id: 102, name: "Luh Putu Swastika, M.Kom.", skills: ["Manajemen", "Sistem Informasi"] },
+            { id: 103, name: "Achmad Zulkarnain, S.T.", skills: ["Elektro", "Otomasi"] }
+        ];
+
+        // 3. ENGINE SECURITY: LOGIN & LOGOUT
+        async function handleLogin(e) {
             e.preventDefault();
-            e.stopImmediatePropagation();
-            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
-            const passwordInput = document.getElementById('login-password').value;
-            const btnLogin = document.getElementById('btn-login');
-            const errorDiv = document.getElementById('login-error');
-
-            btnLogin.disabled = true;
-            btnLogin.innerText = "Memvalidasi...";
-            errorDiv.classList.add('hidden');
+            const uName = document.getElementById("loginUsername").value.trim().toLowerCase();
+            const pWord = document.getElementById("loginPassword").value.trim();
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('master_pic')
+                const { data, error } = await _supabase
+                    .from('kan_pic_credentials')
                     .select('*')
-                    .eq('username', usernameInput)
-                    .eq('password', passwordInput)
-                    .eq('status_aktif', true);
+                    .eq('username', uName)
+                    .single();
 
-                if (error) {
-                    alert("Koneksi Supabase Bermasalah: " + error.message);
-                    throw error;
-                }
-                
-                if (!data || data.length === 0) {
-                    throw new Error("Username atau Password Anda salah. Silakan periksa kembali.");
+                if (error || !data || data.password !== pWord) {
+                    alert("Kredensial salah atau tidak terdaftar di DB Supabase!");
+                    return;
                 }
 
-                currentUser = data[0]; 
-                initApp();
+                activePICUser = uName;
+                document.getElementById("authContainer").classList.add("hidden");
+                document.getElementById("appContainer").classList.remove("hidden");
+                document.getElementById("displayPicName").innerText = `PIC: ${uName.toUpperCase()}`;
 
+                if (uName === "pic.pusat") {
+                    document.getElementById("adminPicManagementSection").classList.remove("hidden");
+                    renderAdminPicTable();
+                } else {
+                    document.getElementById("adminPicManagementSection").classList.add("hidden");
+                }
+
+                await syncFetchFromSupabase();
             } catch (err) {
-                errorDiv.innerText = err.message;
-                errorDiv.classList.remove('hidden');
-                btnLogin.disabled = false;
-                btnLogin.innerText = "Masuk Sistem";
+                console.error(err);
+                alert("Koneksi gagal ke server gateway!");
             }
-        });
+        }
 
-        function initApp() {
-            document.getElementById('login-page').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('user-info-display').innerText = `PIC Berjalan: ${currentUser.nama_lengkap} | Role: ${currentUser.role.toUpperCase()}`;
+        function handleLogout() {
+            activePICUser = null;
+            document.getElementById("appContainer").classList.add("hidden");
+            document.getElementById("authContainer").classList.remove("hidden");
+            document.getElementById("loginForm").reset();
+        }
 
-            if (currentUser.role === 'admin') {
-                document.getElementById('admin-management-section').classList.remove('hidden');
-                loadAllPIC(); 
-            } else {
-                document.getElementById('admin-management-section').classList.add('hidden');
+        // 4. SUPABASE TRANSACTION SYNC ENGINE
+        async function syncFetchFromSupabase() {
+            const { data, error } = await _supabase.from('schedule_database').select('*');
+            if (!error && data) {
+                scheduleDatabase = data;
+                renderCalendar();
+                renderTable();
             }
-
-            setupAutocompleteLPK();
-            setupAutocompleteAsesor();
-            fetchLiveJadwal(); // Ambil master data dari database cloud
-            listenRealtimeJadwal();
         }
 
-        function logout() {
-            currentUser = null;
-            document.getElementById('main-app').classList.add('hidden');
-            document.getElementById('login-page').classList.remove('hidden');
-            document.getElementById('login-form').reset();
-            document.getElementById('btn-login').disabled = false;
-            document.getElementById('btn-login').innerText = "Masuk Sistem";
+        // 5. BULK INPUT ENGINE LOGIC
+        function syncGlobalDatesToAsesors() {
+            const globalStart = document.getElementById("globalDateStart").value;
+            const globalEnd = document.getElementById("globalDateEnd").value;
+            document.querySelectorAll(".date-start-field").forEach(input => input.value = globalStart);
+            document.querySelectorAll(".date-end-field").forEach(input => input.value = globalEnd);
         }
 
-        // --- READ: AMBIL DATA JADWAL UTAMA ---
-        async function fetchLiveJadwal() {
-            const { data, error } = await supabaseClient
-                .from('jadwal_asesor')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) return;
-            globalSchedules = data || [];
-            renderTable(); // Lempar ke fungsi filter front-end mantap Anda
+        function filterAsesorList() {
+            const keyword = document.getElementById("asesorSearchInput").value.toLowerCase();
+            const filtered = masterAsesors.filter(ase => 
+                ase.name.toLowerCase().includes(keyword) || 
+                ase.skills.some(s => s.toLowerCase().includes(keyword))
+            );
+            renderBulkAsesorList(filtered);
         }
 
-        // --- CORE RENDER & FILTER FRONT-END PILEHAN ANDA ---
-        function renderTable() {
-            const tbody = document.getElementById('scheduleTableBody');
-            const searchFilter = document.getElementById('filterLpk').value.toLowerCase().trim();
-            const timeFilter = document.getElementById('filterWaktu').value;
-
-            tbody.innerHTML = "";
-
-            // Filter data secara live di sisi front-end
-            const filteredData = globalSchedules.filter(j => {
-                const matchLpk = (j.nama_lpk && j.nama_lpk.toLowerCase().includes(searchFilter)) || 
-                                 (j.no_lpk && j.no_lpk.toLowerCase().includes(searchFilter)) ||
-                                 (j.nama_asesor && j.nama_asesor.toLowerCase().includes(searchFilter));
-                
-                let matchTime = true;
-                if (timeFilter !== 'ALL') {
-                    matchTime = (j.tanggal_mulai && j.tanggal_mulai.startsWith(timeFilter)) || 
-                                (j.tanggal_selesai && j.tanggal_selesai.startsWith(timeFilter));
+        function checkConflictExists(asesorId, start, end, excludeId = null) {
+            return scheduleDatabase.find(sch => {
+                if (excludeId && sch.id == excludeId) return false;
+                if (sch.asesor_id === parseInt(asesorId)) {
+                    return (new Date(start) <= new Date(sch.date_end) && new Date(end) >= new Date(sch.date_start));
                 }
-                return matchLpk && matchTime;
+                return false;
+            });
+        }
+
+        async function handleBulkFormSubmit(e) {
+            e.preventDefault();
+            const lpkName = document.getElementById("selectedLpkValue").value.trim();
+            const checkboxes = document.querySelectorAll(".bulk-checkbox:checked");
+
+            if(!lpkName) { alert("Tentukan nama LPK target!"); return; }
+            if (checkboxes.length === 0) { alert("Silakan centang minimal satu asesor!"); return; }
+
+            let temporarySchedules = [];
+            let bentrokDetected = false;
+
+            checkboxes.forEach(cb => {
+                const aseId = parseInt(cb.value);
+                const startVal = document.getElementById(`start-ase-${aseId}`).value;
+                const endVal = document.getElementById(`end-ase-${aseId}`).value;
+
+                if (!startVal || !endVal) { alert(`Tanggal untuk asesor ID ${aseId} tidak lengkap!`); bentrokDetected = true; return; }
+                if (new Date(startVal) > new Date(endVal)) { alert(`Rentang tanggal terbalik!`); bentrokDetected = true; return; }
+
+                const conflict = checkConflictExists(aseId, startVal, endVal);
+                if (conflict) {
+                    alert(`🚨 Konflik Terdeteksi!\nAsesor: ${conflict.asesor_name}\nSudah terjadwal di: ${conflict.lpk_name}\nRentang: ${conflict.date_start} s/d ${conflict.date_end}`);
+                    bentrokDetected = true;
+                } else {
+                    const asesorObj = masterAsesors.find(a => a.id === aseId);
+                    temporarySchedules.push({
+                        lpk_name: lpkName,
+                        asesor_id: aseId,
+                        asesor_name: asesorObj.name,
+                        date_start: startVal,
+                        date_end: endVal,
+                        status: "Dihubungi",
+                        created_by: activePICUser
+                    });
+                }
             });
 
-            if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 font-medium bg-slate-50">Tidak ada distribusi jadwal tugas yang cocok dengan filter.</td></tr>`;
+            if (bentrokDetected) return;
+
+            const { error } = await _supabase.from('schedule_database').insert(temporarySchedules);
+            if (error) {
+                alert("Gagal menyimpan transaksi ke Supabase!");
                 return;
             }
 
-            filteredData.forEach(j => {
-                // Set warna badge status dinamis
-                let statusBadge = `<span class="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full font-bold text-[10px]">Terjadwal</span>`;
-                if (j.status === 'Berjalan') {
-                    statusBadge = `<span class="bg-amber-50 text-amber-700 border border-amber-100 px-2.5 py-1 rounded-full font-bold text-[10px]">Berjalan</span>`;
-                } else if (j.status === 'Selesai') {
-                    statusBadge = `<span class="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-full font-bold text-[10px]">Selesai</span>`;
-                }
+            temporarySchedules.forEach(sch => triggerNotificationGateway("CREATE", sch));
 
-                const row = document.createElement('tr');
-                row.className = "hover:bg-slate-50 transition border-b border-slate-100";
-                row.innerHTML = `
-                    <td class="px-4 py-3 font-semibold text-slate-700"><i class="fa-solid fa-user-tie text-slate-400 mr-1.5"></i>${j.nama_asesor}</td>
-                    <td class="px-4 py-3">
-                        <div class="font-bold text-slate-800">${j.nama_lpk}</div>
-                        <div class="text-[10px] text-slate-400 font-medium">No Akred: ${j.no_lpk}</div>
-                    </td>
-                    <td class="px-4 py-3"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[11px] font-medium">${j.kompetensi || 'Umum'}</span></td>
-                    <td class="px-4 py-3 font-medium">
-                        <div class="flex items-center gap-1 text-slate-600"><i class="fa-solid fa-calendar-days text-slate-300 mr-1"></i>${j.tanggal_mulai} <span class="text-slate-300">s/d</span> ${j.tanggal_selesai}</div>
-                    </td>
-                    <td class="px-4 py-3 text-center text-slate-500 font-semibold">@${j.created_by}</td>
-                    <td class="px-4 py-3 text-center">${statusBadge}</td>
-                    <td class="px-4 py-3 text-center">
-                        <div class="flex items-center justify-center gap-1.5">
-                            <button onclick="openEditModal('${j.id}', '${j.nama_asesor}', '${j.kompetensi || ''}', '${j.tanggal_mulai}', '${j.tanggal_selesai}', '${j.status || 'Terjadwal'}')" class="p-1.5 bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg cursor-pointer transition" title="Edit Tugas">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </button>
-                            <button onclick="deleteJadwal('${j.id}', '${j.nama_lpk}')" class="p-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg cursor-pointer transition" title="Hapus Tugas">
-                                <i class="fa-solid fa-trash text-xs"></i>
-                            </button>
-                        </div>
-                    </td>
+            document.getElementById("bulkScheduleForm").reset();
+            await syncFetchFromSupabase();
+            alert("🎉 Seluruh penugasan berhasil didaftarkan secara paralel!");
+        }
+
+        // 6. ADAPTIVE MASTER RENDER CALENDAR & TABLE
+        function renderCalendar() {
+            const cellsContainer = document.getElementById("calendarCells");
+            if (!cellsContainer) return;
+            cellsContainer.innerHTML = "";
+
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                cellsContainer.innerHTML += `<div class="bg-slate-900/10 min-h-[65px] border border-slate-800/40 rounded-lg"></div>`;
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const currentStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                let assignmentsHtml = "";
+
+                scheduleDatabase.forEach(sch => {
+                    if (currentStr >= sch.date_start && currentStr <= sch.date_end) {
+                        const styleColor = sch.status === "Confirm" ? "bg-emerald-500 text-white" : "bg-amber-400 text-slate-950";
+                        assignmentsHtml += `
+                            <div onclick="openEditModal(${sch.id})" class="${styleColor} text-[9px] font-bold p-0.5 rounded mb-0.5 truncate cursor-pointer" title="${sch.asesor_name}">
+                                👤 ${sch.asesor_name.split(',')[0]}
+                            </div>
+                        `;
+                    }
+                });
+
+                cellsContainer.innerHTML += `
+                    <div class="bg-slate-950/40 border border-slate-800 p-1 flex flex-col justify-between rounded-lg min-h-[70px]">
+                        <span class="text-[10px] font-mono text-slate-500 font-bold">${day}</span>
+                        <div class="overflow-y-auto space-y-0.5 flex-1 max-h-[50px] no-scrollbar">${assignmentsHtml}</div>
+                    </div>
                 `;
-                tbody.appendChild(row);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("scheduleTableBody");
+            if (!tbody) return; tbody.innerHTML = "";
+
+            const fAse = document.getElementById("filterAsesor").value.toLowerCase();
+            const fLpk = document.getElementById("filterLpk").value.toLowerCase();
+            const fWkt = document.getElementById("filterWaktu").value;
+
+            const filtered = scheduleDatabase.filter(sch => {
+                const mAA = sch.asesor_name.toLowerCase().includes(fAse);
+                const mLL = sch.lpk_name.toLowerCase().includes(fLpk);
+                const mWW = fWkt === "ALL" ? true : (sch.date_start.startsWith(fWkt) || sch.date_end.startsWith(fWkt));
+                return mAA && mLL && mWW;
             });
-        }
 
-        // --- CREATE: INSERT DATA JADWAL BARU ---
-        document.getElementById('schedule-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btnSave = document.getElementById('btn-save-schedule');
-            btnSave.disabled = true;
-            btnSave.innerHTML = "<i class='fa-solid fa-spinner animate-spin'></i> Menyimpan...";
-
-            const noLpk = document.getElementById('selected-no-lpk').value || "REG-UNKNOWN";
-            const namaLpk = document.getElementById('selected-nama-lpk').value || document.getElementById('search-lpk').value;
-            const namaAsesor = document.getElementById('search-asesor').value;
-            const kompetensi = document.getElementById('schedule-kompetensi').value;
-            const tglMulai = document.getElementById('date-start').value;
-            const tglSelesai = document.getElementById('date-end').value;
-
-            try {
-                const { error } = await supabaseClient
-                    .from('jadwal_asesor')
-                    .insert([{
-                        no_lpk: noLpk,
-                        nama_lpk: namaLpk,
-                        nama_asesor: namaAsesor,
-                        kompetensi: kompetensi,
-                        tanggal_mulai: tglMulai,
-                        tanggal_selesai: tglSelesai,
-                        status: 'Terjadwal',
-                        created_by: currentUser.username
-                    }]);
-
-                if (error) throw error;
-
-                alert("Jadwal Berhasil Ditambahkan Secara Live!");
-                document.getElementById('schedule-form').reset();
-                fetchLiveJadwal();
-
-            } catch (err) {
-                alert("Gagal menyimpan jadwal: " + err.message);
-            } finally {
-                btnSave.disabled = false;
-                btnSave.innerHTML = "<i class='fa-solid fa-floppy-disk mr-1'></i> Simpan Jadwal Tim";
-            }
-        });
-
-        // --- UPDATE & DELETE MANAGEMENT ACTION (FITUR MANTAP EDIT) ---
-        function openEditModal(id, asesor, kompetensi, start, end, status) {
-            document.getElementById('edit-id').value = id;
-            document.getElementById('edit-asesor').value = asesor;
-            document.getElementById('edit-kompetensi').value = kompetensi;
-            document.getElementById('edit-start').value = start;
-            document.getElementById('edit-end').value = end;
-            document.getElementById('edit-status').value = status;
-            document.getElementById('editPopupModal').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editPopupModal').classList.add('hidden');
-        }
-
-        document.getElementById('edit-schedule-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const namaAsesor = document.getElementById('edit-asesor').value;
-            const kompetensi = document.getElementById('edit-kompetensi').value;
-            const tglMulai = document.getElementById('edit-start').value;
-            const tglSelesai = document.getElementById('edit-end').value;
-            const status = document.getElementById('edit-status').value;
-
-            try {
-                const { error } = await supabaseClient
-                    .from('jadwal_asesor')
-                    .update({
-                        nama_asesor: namaAsesor,
-                        kompetensi: kompetensi,
-                        tanggal_mulai: tglMulai,
-                        tanggal_selesai: tglSelesai,
-                        status: status
-                    })
-                    .eq('id', id);
-
-                if (error) throw error;
-
-                closeEditModal();
-                fetchLiveJadwal();
-
-            } catch (err) {
-                alert("Gagal merubah data: " + err.message);
-            }
-        });
-
-        async function deleteJadwal(id, namaLpk) {
-            if (!confirm(`Apakah Anda yakin ingin menghapus seluruh rentang jadwal tugas di ${namaLpk}?`)) return;
-            
-            try {
-                const { error } = await supabaseClient
-                    .from('jadwal_asesor')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) throw error;
-                fetchLiveJadwal();
-            } catch (err) {
-                alert("Gagal menghapus tugas: " + err.message);
-            }
-        }
-
-        // --- EXPORT DATA: CONVERT MANTAP TABLE TO CSV FILE ---
-        function exportTableToCSV() {
-            if (globalSchedules.length === 0) {
-                alert("Tidak ada data jadwal yang bisa diexport saat ini.");
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-xs italic text-slate-500">Tidak ditemukan logs penugasan.</td></tr>`;
                 return;
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Asesor,Nama LPK,No Akreditasi,Kompetensi,Tanggal Mulai,Tanggal Selesai,PIC pembuat,Status\n";
+            filtered.forEach(sch => {
+                const badge = sch.status === "Confirm"
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Confirm Terjadwal</span>`
+                    : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Dihubungi</span>`;
 
-            globalSchedules.forEach(j => {
-                const row = [
-                    `"${j.nama_asesor || ''}"`,
-                    `"${j.nama_lpk || ''}"`,
-                    `"${j.no_lpk || ''}"`,
-                    `"${j.kompetensi || 'Umum'}"`,
-                    `"${j.tanggal_mulai || ''}"`,
-                    `"${j.tanggal_selesai || ''}"`,
-                    `"${j.created_by || ''}"`,
-                    `"${j.status || 'Terjadwal'}"`
-                ].join(",");
-                csvContent += row + "\n";
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-900/50 text-xs text-slate-300 transition-colors">
+                        <td class="px-4 py-2.5 font-bold text-white">${sch.asesor_name}</td>
+                        <td class="px-4 py-2.5">${sch.lpk_name}</td>
+                        <td class="px-4 py-2.5"><span class="bg-slate-800 px-1 rounded text-[10px]">Generalist</span></td>
+                        <td class="px-4 py-2.5 font-mono text-[11px] text-slate-400">${sch.date_start} s/d ${sch.date_end}</td>
+                        <td class="px-4 py-2.5 text-center font-mono text-slate-400">${sch.created_by.toUpperCase()}</td>
+                        <td class="px-4 py-2.5 text-center">${badge}</td>
+                        <td class="px-4 py-2.5 text-center">
+                            <button onclick="openEditModal(${sch.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-[10px] font-bold cursor-pointer">
+                                <i class="fa-solid fa-gear"></i> Kelola
+                            </button>
+                        </td>
+                    </tr>
+                `;
             });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Daftar_Distribusi_Jadwal_KAN_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
 
-        // --- MANAGEMENT PIC FOR ADMIN (UPSERT UTAMA) ---
-        document.getElementById('pic-form').addEventListener('submit', async (e) => {
+        // 7. CALENDAR HELPER CONTROLLER
+        function jumpToToday() { currentCalendarDate = new Date(); updateDropdownValueIndicators(); renderCalendar(); }
+        function initCalendarDropdowns() {
+            const mSel = document.getElementById("calMonthSelect");
+            const ySel = document.getElementById("calYearSelect");
+            mSel.innerHTML = ""; monthNames.forEach((m, idx) => { mSel.innerHTML += `<option value="${idx}">${m}</option>`; });
+            ySel.innerHTML = ""; for (let y = 2024; y <= 2030; y++) { ySel.innerHTML += `<option value="${y}">${y}</option>`; }
+            updateDropdownValueIndicators();
+        }
+        function updateDropdownValueIndicators() {
+            document.getElementById("calMonthSelect").value = currentCalendarDate.getMonth();
+            document.getElementById("calYearSelect").value = currentCalendarDate.getFullYear();
+        }
+        function changeMonth(offset) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + offset); updateDropdownValueIndicators(); renderCalendar(); }
+        function handleSelectDateChange() {
+            const m = parseInt(document.getElementById("calMonthSelect").value);
+            const y = parseInt(document.getElementById("calYearSelect").value);
+            currentCalendarDate = new Date(y, m, 1); renderCalendar();
+        }
+
+        // 8. ASESOR BULK LAYOUT INJECTOR
+        function renderBulkAsesorList(list) {
+            const container = document.getElementById("bulkAsesorContainer"); container.innerHTML = "";
+            const gStart = document.getElementById("globalDateStart").value || "";
+            const gEnd = document.getElementById("globalDateEnd").value || "";
+
+            list.forEach(ase => {
+                container.innerHTML += `
+                    <div class="bg-slate-900/40 p-2 rounded-lg border border-slate-800 text-xs">
+                        <label class="flex items-center gap-2 font-bold text-white">
+                            <input type="checkbox" value="${ase.id}" class="bulk-checkbox w-3.5 h-3.5 accent-blue-500 rounded">
+                            <span>${ase.name}</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-2 pl-5 pt-1.5">
+                            <input type="date" id="start-ase-${ase.id}" value="${gStart}" class="bg-slate-950 border border-slate-800 rounded p-1 text-[10px] text-slate-300 date-start-field">
+                            <input type="date" id="end-ase-${ase.id}" value="${gEnd}" class="bg-slate-950 border border-slate-800 rounded p-1 text-[10px] text-slate-300 date-end-field">
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 9. MANAGEMENT HAK AKSES PIC BY ADMIN PUSAT
+        async function handleCreatePic(e) {
             e.preventDefault();
-            const username = document.getElementById('pic-username').value.trim().toLowerCase();
-            const password = document.getElementById('pic-password').value;
-            const nama_lengkap = document.getElementById('pic-fullname').value;
-            const role_akses = document.getElementById('pic-role').value;
-            
-            const errDiv = document.getElementById('pic-error');
-            const succDiv = document.getElementById('pic-success');
-            errDiv.classList.add('hidden'); succDiv.classList.add('hidden');
+            const uName = document.getElementById("newPicUsername").value.trim().toLowerCase();
+            const pWord = document.getElementById("newPicPassword").value.trim();
 
-            try {
-                const { error } = await supabaseClient
-                    .from('master_pic')
-                    .upsert({ 
-                        username: username, password: password, nama_lengkap: nama_lengkap, 
-                        role: role_akses, status_aktif: true
-                    }, { onConflict: 'username' });
+            const { error } = await _supabase.from('kan_pic_credentials').insert([{ username: uName, password: pWord }]);
+            if (error) { alert("Username sudah terdaftar atau gagal dibuat!"); return; }
 
-                if (error) throw error;
+            document.getElementById("addPicForm").reset();
+            renderAdminPicTable();
+            alert("Akun PIC sukses didaftarkan di Supabase Database!");
+        }
 
-                succDiv.innerText = `Sukses menyimpan akun @${username}!`;
-                succDiv.classList.remove('hidden');
-                document.getElementById('pic-form').reset();
-                loadAllPIC();
-
-            } catch (err) {
-                errDiv.innerText = err.message;
-                errDiv.classList.remove('hidden');
+        async function deletePicUser(username) {
+            if (confirm(`Hapus hak akses untuk PIC: ${username}?`)) {
+                await _supabase.from('kan_pic_credentials').delete().eq('username', username);
+                renderAdminPicTable();
             }
-        });
-
-        async function loadAllPIC() {
-            const container = document.getElementById('pic-list-container');
-            const { data, error } = await supabaseClient.from('master_pic').select('*').order('created_at', { ascending: false });
-            if (error || !data) return;
-            container.innerHTML = "";
-            data.forEach(p => {
-                const item = document.createElement('div');
-                item.className = "text-[11px] p-1.5 bg-white border border-slate-100 rounded-lg flex justify-between items-center shadow-2xs";
-                item.innerHTML = `<div><strong class="text-blue-700">@${p.username}</strong> (${p.role})<div class="text-slate-400 font-mono">pass: ${p.password}</div></div><span class="px-1.5 py-0.5 rounded text-[9px] bg-green-50 text-green-700 border border-green-100 font-bold">Aktif</span>`;
-                container.appendChild(item);
-            });
         }
 
-        // --- AUTOCOMPLETE LOGIC: LPK & ASESOR ---
-        function setupAutocompleteLPK() {
-            const input = document.getElementById('search-lpk');
-            const listContainer = document.getElementById('lpk-autocomplete-list');
-
-            input.addEventListener('input', async function() {
-                const val = this.value; listContainer.innerHTML = "";
-                if (!val || val.length < 2) return;
-
-                const { data, error } = await supabaseClient
-                    .from('master_lpk')
-                    .select('"NO AKREDITASI", "NAMA LABORATORIUM"')
-                    .ilike('NAMA LABORATORIUM', `%${val}%`)
-                    .limit(7);
-
-                if (error || !data) return;
-
+        async function renderAdminPicTable() {
+            const tbody = document.getElementById("picUserTableBody"); if(!tbody) return; tbody.innerHTML = "";
+            const { data } = await _supabase.from('kan_pic_credentials').select('*');
+            if (data) {
                 data.forEach(row => {
-                    const b = document.createElement("div");
-                    b.innerHTML = `<i class="fa-solid fa-vial text-slate-400 mr-1.5 text-xs"></i><strong>${row['NO AKREDITASI'] || '-'}</strong> - ${row['NAMA LABORATORIUM']}`;
-                    b.addEventListener("click", function() {
-                        input.value = row['NAMA LABORATORIUM'];
-                        document.getElementById('selected-no-lpk').value = row['NO AKREDITASI'] || 'REG-UNKNOWN';
-                        document.getElementById('selected-nama-lpk').value = row['NAMA LABORATORIUM'];
-                        listContainer.innerHTML = "";
-                    });
-                    listContainer.appendChild(b);
+                    const isPusat = row.username === "pic.pusat";
+                    const btn = isPusat ? `<span class="text-slate-500 italic">Protected</span>` : `<button onclick="deletePicUser('${row.username}')" class="text-red-400 hover:text-red-500 font-bold"><i class="fa-solid fa-trash-can"></i></button>`;
+                    tbody.innerHTML += `<tr class="border-b border-slate-800"><td class="py-1 font-mono">${row.username}</td><td class="py-1 text-center">${btn}</td></tr>`;
                 });
-            });
+            }
         }
 
-        function setupAutocompleteAsesor() {
-            const input = document.getElementById('search-asesor');
-            const listContainer = document.getElementById('asesor-autocomplete-list');
+        // 10. DETAIL ACTIONS MODAL CONTROL & CONFIRMATION
+        let targetSelectedScheduleId = null;
+        function openEditModal(id) {
+            targetSelectedScheduleId = id;
+            const item = scheduleDatabase.find(s => s.id == id);
+            if(!item) return;
 
-            input.addEventListener('input', async function() {
-                const val = this.value; listContainer.innerHTML = "";
-                if (!val || val.length < 2) return;
+            document.getElementById("modalContentDetail").innerHTML = `
+                <p><b>Asesor:</b> ${item.asesor_name}</p>
+                <p><b>LPK Tujuan:</b> ${item.lpk_name}</p>
+                <p><b>Periode Tugas:</b> ${item.date_start} s/d ${item.date_end}</p>
+                <p><b>Current Status:</b> ${item.status}</p>
+            `;
+            document.getElementById("editModal").classList.remove("hidden");
 
-                const { data, error } = await supabaseClient
-                    .from('master_asesor')
-                    .select('NAMA')
-                    .ilike('NAMA', `%${val}%`)
-                    .limit(7);
+            document.getElementById("btnConfirmAction").onclick = async () => {
+                const { error } = await _supabase.from('schedule_database').update({ status: 'Confirm' }).eq('id', id);
+                if(!error) {
+                    triggerNotificationGateway("CONFIRM", item);
+                    closeEditModal();
+                    await syncFetchFromSupabase();
+                }
+            };
 
-                if (error || !data) return;
+            document.getElementById("btnDeleteAction").onclick = async () => {
+                if(confirm("Hapus jadwal penugasan ini?")) {
+                    const { error } = await _supabase.from('schedule_database').delete().eq('id', id);
+                    if(!error) { closeEditModal(); await syncFetchFromSupabase(); }
+                }
+            };
+        }
+        function closeEditModal() { document.getElementById("editModal").classList.add("hidden"); }
 
-                data.forEach(row => {
-                    const b = document.createElement("div");
-                    b.innerHTML = `<i class="fa-solid fa-user-tie text-slate-400 mr-1.5 text-xs"></i>${row['NAMA']}`;
-                    b.addEventListener("click", function() {
-                        input.value = row['NAMA'];
-                        listContainer.innerHTML = "";
-                    });
-                    listContainer.appendChild(b);
-                });
-            });
+        // 11. INTERNAL RUNTIME LOG TRACKER ENGINE (TANPA WA & EMAIL)
+        function triggerNotificationGateway(type, schObj) {
+            const overlay = document.getElementById("notificationOverlay");
+            const container = document.getElementById("notificationPayloadContent");
+            overlay.classList.remove("hidden");
+
+            let log = "";
+            if (type === "CREATE") {
+                log = `📥 [DB INSERT SUCCESS]: Sukses mengusulkan jadwal baru.\n📍 Asesor: ${schObj.asesor_name}\n📍 Lokasi: ${schObj.lpk_name}\n📍 Rentang: ${schObj.date_start} s/d ${schObj.date_end}\n⚙️ Status awal: 'Dihubungi'.`;
+            } else if (type === "CONFIRM") {
+                log = `✅ [DB UPDATE SUCCESS]: Status berhasil dimutasi!\n📍 Asesor: ${schObj.asesor_name} resmi dikonfirmasi bertugas pada klaster lembaga ${schObj.lpk_name}.`;
+            }
+            container.innerHTML += `<div class="border-b border-slate-800 pb-2 mb-2 text-blue-400">TIMESTAMP: ${new Date().toLocaleTimeString()}<br><span class="text-slate-300">${log}</span></div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+        function closeNotificationOverlay() {
+            document.getElementById("notificationOverlay").classList.add("hidden");
+            document.getElementById("notificationPayloadContent").innerHTML = "";
         }
 
-        // --- REALTIME DATABASE STREAMING ---
-        function listenRealtimeJadwal() {
-            supabaseClient
-                .channel('schema-db-changes')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'jadwal_asesor' }, () => {
-                    fetchLiveJadwal();
-                })
-                .subscribe();
-        }
-
-        document.addEventListener("click", function (e) {
-            if (e.target.id !== 'search-lpk') document.getElementById('lpk-autocomplete-list').innerHTML = "";
-            if (e.target.id !== 'search-asesor') document.getElementById('asesor-autocomplete-list').innerHTML = "";
+        // INITIALIZER ON LOAD
+        window.addEventListener("DOMContentLoaded", () => {
+            initCalendarDropdowns();
+            renderBulkAsesorList(masterAsesors);
         });
     </script>
 </body>
