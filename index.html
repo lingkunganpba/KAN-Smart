@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAN Asesor Scheduler - Production v5.1</title>
+    <title>KAN Asesor Scheduler - Production v5.2</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -37,7 +37,7 @@
                 <p class="text-sm text-gray-500">Komite Akreditasi Nasional (KAN)</p>
             </div>
             <div id="login-error" class="hidden mb-4 rounded bg-red-100 p-3 text-sm text-red-700"></div>
-            <form id="login-form" class="space-y-4">
+            <form id="login-form" class="space-y-4" onsubmit="event.preventDefault();">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700">Username PIC</label>
                     <input type="text" id="login-username" required class="mt-1 w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none">
@@ -123,7 +123,7 @@
                     <div class="mt-4">
                         <p class="font-bold text-xs text-gray-500 uppercase mb-2">Daftar Akun PIC Aktif</p>
                         <div id="pic-list-container" class="max-h-40 overflow-y-auto space-y-1.5 border p-2 bg-gray-50 rounded">
-                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,7 +142,7 @@
                                 </tr>
                             </thead>
                             <tbody id="table-jadwal-body" class="divide-y">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -152,14 +152,14 @@
     </div>
 
     <script>
-        // Konfigurasi Sambungan Supabase Cloud Anda
         const SUPABASE_URL = "https://ogubeyrmghsyzbzzohfo.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndWJleXJtZ2hzeXpienpvaGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcwODYsImV4cCI6MjA5NTI4MzA4Nn0._p6GCliHPOCg8jYL9fo357AQLr20kQKH2GohXOwulsI"; 
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // PERBAIKAN UTAMA: Mengubah nama objek agar tidak bentrok (crash)
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentUser = null;
 
-       // --- ENGINE PROSES LOGIN ---
+        // --- ENGINE PROSES LOGIN ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -173,17 +173,15 @@
             errorDiv.classList.add('hidden');
 
             try {
-                // Ambil data menggunakan query standar
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('master_pic')
                     .select('*')
                     .eq('username', usernameInput)
                     .eq('password', passwordInput)
                     .eq('status_aktif', true);
 
-                // Jika ada error koneksi/API dari Supabase, tangkap dan munculkan alert langsung
                 if (error) {
-                    alert("Koneksi Supabase Ditolak: " + error.message + " (Kode: " + error.code + ")");
+                    alert("Koneksi Supabase Bermasalah: " + error.message);
                     throw error;
                 }
                 
@@ -195,7 +193,6 @@
                 initApp();
 
             } catch (err) {
-                // Munculkan teks eror di atas kotak login
                 errorDiv.innerText = err.message;
                 errorDiv.classList.remove('hidden');
                 btnLogin.disabled = false;
@@ -208,7 +205,6 @@
             document.getElementById('main-app').classList.remove('hidden');
             document.getElementById('user-info-display').innerText = `PIC Berjalan: ${currentUser.nama_lengkap} | Role: ${currentUser.role.toUpperCase()}`;
 
-            // Pengecekan Hak Akses Berdasarkan Kolom 'role'
             if (currentUser.role === 'admin') {
                 document.getElementById('admin-management-section').classList.remove('hidden');
                 loadAllPIC(); 
@@ -251,7 +247,7 @@
             }
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('master_pic')
                     .upsert({ 
                         username: username, 
@@ -276,7 +272,7 @@
 
         async function loadAllPIC() {
             const container = document.getElementById('pic-list-container');
-            const { data, error } = await supabase.from('master_pic').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('master_pic').select('*').order('created_at', { ascending: false });
             
             if (error || !data) return;
             container.innerHTML = "";
@@ -304,7 +300,7 @@
                 listContainer.innerHTML = "";
                 if (!val || val.length < 2) return;
 
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('master_lpk')
                     .select('"NO AKREDITASI", "NAMA LABORATORIUM"')
                     .ilike('NAMA LABORATORIUM', `%${val}%`)
@@ -336,7 +332,7 @@
                 listContainer.innerHTML = "";
                 if (!val || val.length < 2) return;
 
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('master_asesor')
                     .select('NAMA')
                     .ilike('NAMA', `%${val}%`)
@@ -356,7 +352,7 @@
             });
         }
 
-        // --- SIMPAN TRANSAKSI JADWAL (ANTI DOUBLE CLICK) ---
+        // --- SIMPAN TRANSAKSI JADWAL ---
         document.getElementById('schedule-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnSave = document.getElementById('btn-save-schedule');
@@ -371,7 +367,7 @@
             const tglSelesai = document.getElementById('date-end').value;
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('jadwal_asesor')
                     .insert([{
                         no_lpk: noLpk,
@@ -398,7 +394,7 @@
         // --- STREAMING LIVE DATA JADWAL ---
         async function loadLiveJadwal() {
             const tbody = document.getElementById('table-jadwal-body');
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('jadwal_asesor')
                 .select('*')
                 .order('created_at', { ascending: false })
@@ -426,7 +422,7 @@
         }
 
         function listenRealtimeJadwal() {
-            supabase
+            supabaseClient
                 .channel('schema-db-changes')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'jadwal_asesor' }, (payload) => {
                     loadLiveJadwal();
