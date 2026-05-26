@@ -700,7 +700,7 @@
 
                     id: item.id,
 
-                    lpk_name: item.nama_lpk || "LPK Target",
+                    lpk_name: item.no_lpk || "LPK Target",
 
                     asesor_id: item.asesor_id,
 
@@ -710,7 +710,7 @@
 
                     date_end: item.tanggal_selesai,
 
-                    status: item.status || "Dihubungi",
+                    status: item.status_tugas || "Dihubungi",
 
                     created_by: item.created_by || "system"
 
@@ -1005,7 +1005,7 @@
 
                     temporarySchedules.push({
 
-                        nama_lpk: lpkName,
+                        no_lpk: lpkName,
 
                         asesor_id: aseId,
 
@@ -1015,7 +1015,7 @@
 
                         tanggal_selesai: endVal,
 
-                        status: "Dihubungi",
+                        status_tugas: "Dihubungi",
 
                         created_by: activePICUser
 
@@ -1326,7 +1326,7 @@
 
             document.getElementById("btnConfirmAction").onclick = async () => {
 
-                const { error } = await _supabase.from('jadwal_asesor').update({ status: 'Confirm' }).eq('id', id);
+                const { error } = await _supabase.from('jadwal_asesor').update({ status_tugas: 'Confirm' }).eq('id', id);
 
                 if(!error) { triggerNotificationGateway("CONFIRM", item); closeEditModal(); await syncFetchFromSupabase(); }
 
@@ -1360,7 +1360,7 @@
 
             if (type === "CREATE") {
 
-                log = `📥 [DB INSERT SUCCESS]: Sukses menginput data baru ke tabel 'jadwal_asesor'.\n📍 Target: ${schObj.nama_lpk}\n📍 Asesor: ${schObj.nama_asesor}`;
+                log = `📥 [DB INSERT SUCCESS]: Sukses menginput data baru ke tabel 'jadwal_asesor'.\n📍 Target: ${schObj.no_lpk}\n📍 Asesor: ${schObj.nama_asesor}`;
 
             } else if (type === "CONFIRM") {
 
