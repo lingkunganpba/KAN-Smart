@@ -582,6 +582,8 @@
 
         // FIX #2: Set untuk menyimpan state centang asesor agar tidak hilang saat search
         let selectedAsesorIds = new Set();
+        // FIX DATES: Map untuk menyimpan tanggal per asesor { ID -> {start, end} }
+        let asesorDates = new Map();
 
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -855,8 +857,8 @@
                             <span>${ase.nama}</span>
                         </label>
                         <div class="grid grid-cols-2 gap-2 pl-5 pt-1.5">
-                            <input type="date" id="start-ase-${ase.ID_asesor}" value="${gStart}" class="bg-slate-950 border border-slate-800 rounded p-1 text-[10px] text-slate-300 date-start-field text-center">
-                            <input type="date" id="end-ase-${ase.ID_asesor}" value="${gEnd}" class="bg-slate-950 border border-slate-800 rounded p-1 text-[10px] text-slate-300 date-end-field text-center">
+                            <input type="date" id="start-ase-${ase.ID_asesor}" value="${asesorDates.has(ase.ID_asesor) ? asesorDates.get(ase.ID_asesor).start : gStart}" onchange="saveAsesorDate(${ase.ID_asesor}, 'start', this.value)" class="bg-slate-950 border border-slate-800 rounded p-1 text-[10px] text-slate-300 date-start-field text-center">
+                            <input type="date" id="end-ase-${ase.ID_asesor}" value="${asesorDates.has(ase.ID_asesor) ? asesorDates.get(ase.ID_asesor).end : gEnd}" onchange="saveAsesorDate(${ase.ID_asesor}, 'end', this.value)" class="bg-slate-950 border border-slate-800 rounded p-1 text-[10px] text-slate-300 date-end-field text-center">
                         </div>
                     </div>`;
 
@@ -885,6 +887,16 @@
 
             renderSelectedAsesorsPanel();
 
+        }
+
+        // Simpan tanggal ke Map saat user mengubah input tanggal
+        function saveAsesorDate(id, field, value) {
+            if (!asesorDates.has(id)) {
+                asesorDates.set(id, { start: '', end: '' });
+            }
+            const dates = asesorDates.get(id);
+            dates[field] = value;
+            asesorDates.set(id, dates);
         }
 
         // FIX #3: Render panel asesor terpilih sebagai badge di atas list
@@ -930,6 +942,8 @@
 
             selectedAsesorIds.delete(id);
 
+            asesorDates.delete(id);
+
             const cb = document.querySelector(`.bulk-checkbox[value="${id}"]`);
 
             if (cb) cb.checked = false;
@@ -944,9 +958,15 @@
 
             const globalEnd = document.getElementById("globalDateEnd").value;
 
+            // Update DOM
             document.querySelectorAll(".date-start-field").forEach(input => input.value = globalStart);
 
             document.querySelectorAll(".date-end-field").forEach(input => input.value = globalEnd);
+
+            // Update Map untuk semua asesor yang dipilih agar tersimpan meski di-filter
+            selectedAsesorIds.forEach(id => {
+                asesorDates.set(id, { start: globalStart, end: globalEnd });
+            });
 
         }
 
@@ -972,23 +992,28 @@
 
             const lpkName = document.getElementById("selectedLpkValue").value.trim();
 
-            const checkboxes = document.querySelectorAll(".bulk-checkbox:checked");
-
             if(!lpkName) { alert("Silakan klik salah satu LPK target dari hasil pencarian!"); return; }
 
-            if (checkboxes.length === 0) { alert("Silakan centang minimal satu nama asesor!"); return; }
+            if (selectedAsesorIds.size === 0) { alert("Silakan centang minimal satu nama asesor!"); return; }
 
             let temporarySchedules = [];
 
             let bentrokDetected = false;
 
-            checkboxes.forEach(cb => {
+            selectedAsesorIds.forEach(aseId => {
 
-                const aseId = parseInt(cb.value);
+                // Ambil tanggal dari Map (bukan DOM) agar tetap ada meski asesor tidak tampil di list
+                const savedDates = asesorDates.get(aseId) || {};
 
-                const startVal = document.getElementById(`start-ase-${aseId}`).value;
+                // Fallback ke DOM jika ada (asesor sedang tampil di list)
+                const domStart = document.getElementById(`start-ase-${aseId}`);
+                const domEnd = document.getElementById(`end-ase-${aseId}`);
+                if (domStart && domStart.value) saveAsesorDate(aseId, 'start', domStart.value);
+                if (domEnd && domEnd.value) saveAsesorDate(aseId, 'end', domEnd.value);
 
-                const endVal = document.getElementById(`end-ase-${aseId}`).value;
+                const startVal = (asesorDates.get(aseId) || {}).start || '';
+
+                const endVal = (asesorDates.get(aseId) || {}).end || '';
 
                 if (!startVal || !endVal) { alert(`Tanggal tugas belum lengkap! Klik kotak kalender pada asesor.`); bentrokDetected = true; return; }
 
@@ -1046,8 +1071,9 @@
 
             document.getElementById("selectedLpkValue").value = ""; document.getElementById("selectedNoLpkValue").value = "";
 
-            // FIX #2 & #3: Reset state centang dan panel setelah submit berhasil
+            // FIX #2 & #3: Reset state centang, tanggal, dan panel setelah submit berhasil
             selectedAsesorIds.clear();
+            asesorDates.clear();
 
             renderSelectedAsesorsPanel();
 
