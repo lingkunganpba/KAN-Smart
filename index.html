@@ -26,7 +26,7 @@
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Username</label>
-                    <input type="text" id="loginUsername" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Contoh: pic.pusat">
+                    <input type="text" id="loginUsername" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Contoh: husein">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Password</label>
@@ -104,6 +104,11 @@
                     <form id="addPicForm" onsubmit="handleCreatePic(event)" class="grid grid-cols-2 gap-2 mb-4">
                         <input type="text" id="newPicUsername" required placeholder="User PIC Baru" class="bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white">
                         <input type="password" id="newPicPassword" required placeholder="Pass PIC Baru" class="bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white">
+                        <input type="text" id="newPicNamaLengkap" required placeholder="Nama Lengkap" class="bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white">
+                        <select id="newPicRole" class="bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white">
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
                         <button type="submit" class="col-span-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold p-1.5 rounded cursor-pointer">
                             + Daftarkan PIC Baru
                         </button>
@@ -113,6 +118,7 @@
                             <thead>
                                 <tr class="border-b border-slate-800 text-slate-400">
                                     <th class="py-1">Username</th>
+                                    <th class="py-1 text-center">Role</th>
                                     <th class="py-1 text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -171,7 +177,6 @@
                             <tr class="bg-slate-900/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider font-bold">
                                 <th class="px-4 py-3">Nama Asesor</th>
                                 <th class="px-4 py-3">LPK Target</th>
-                                <th class="px-4 py-3">Klaster</th>
                                 <th class="px-4 py-3">Rentang Tanggal</th>
                                 <th class="px-4 py-3 text-center">Oleh PIC</th>
                                 <th class="px-4 py-3 text-center">Status</th>
@@ -217,21 +222,23 @@
         // 1. SUPABASE CLIENT INITIALIZATION (Ganti dengan kredensial asli Anda)
         const SUPABASE_URL = "https://ogubeyrmghsyzbzzohfo.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndWJleXJtZ2hzeXpienpvaGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcwODYsImV4cCI6MjA5NTI4MzA4Nn0._p6GCliHPOCg8jYL9fo357AQLr20kQKH2GohXOwulsI";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const _supabase = supabase.createClient(https://ogubeyrmghsyzbzzohfo.supabase.co, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndWJleXJtZ2hzeXpienpvaGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcwODYsImV4cCI6MjA5NTI4MzA4Nn0._p6GCliHPOCg8jYL9fo357AQLr20kQKH2GohXOwulsI);
 
         // 2. RUNTIME GLOBAL STATES
         let activePICUser = null;
+        let activeRole = 'staff';
         let scheduleDatabase = [];
         let currentCalendarDate = new Date();
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
+        // Dummy data asesor untuk simulasi bulk picker (bisa diganti relasi database nantinya)
         const masterAsesors = [
-            { id: 101, name: "Dr. Ir. Hariadi, M.T.", skills: ["Generalist", "Informatika"] },
-            { id: 102, name: "Luh Putu Swastika, M.Kom.", skills: ["Manajemen", "Sistem Informasi"] },
-            { id: 103, name: "Achmad Zulkarnain, S.T.", skills: ["Elektro", "Otomasi"] }
+            { id: 101, name: "Dr. Ir. Hariadi, M.T.", skills: ["Generalist"] },
+            { id: 102, name: "Luh Putu Swastika, M.Kom.", skills: ["Sistem Informasi"] },
+            { id: 103, name: "Achmad Zulkarnain, S.T.", skills: ["Otomasi"] }
         ];
 
-        // 3. ENGINE SECURITY: LOGIN & LOGOUT
+        // 3. ENGINE SECURITY: LOGIN & LOGOUT (Disesuaikan dengan tabel 'master_pic')
         async function handleLogin(e) {
             e.preventDefault();
             const uName = document.getElementById("loginUsername").value.trim().toLowerCase();
@@ -239,22 +246,26 @@
 
             try {
                 const { data, error } = await _supabase
-                    .from('kan_pic_credentials')
+                    .from('master_pic') // Diubah sesuai gambar database Anda
                     .select('*')
                     .eq('username', uName)
+                    .eq('status_aktif', true)
                     .single();
 
                 if (error || !data || data.password !== pWord) {
-                    alert("Kredensial salah atau tidak terdaftar di DB Supabase!");
+                    alert("Kredensial salah atau tidak terdaftar di tabel master_pic!");
                     return;
                 }
 
                 activePICUser = uName;
+                activeRole = data.role; // Membaca kolom 'role' dari database Anda
+
                 document.getElementById("authContainer").classList.add("hidden");
                 document.getElementById("appContainer").classList.remove("hidden");
-                document.getElementById("displayPicName").innerText = `PIC: ${uName.toUpperCase()}`;
+                document.getElementById("displayPicName").innerText = `PIC: ${uName.toUpperCase()} (${activeRole.toUpperCase()})`;
 
-                if (uName === "pic.pusat") {
+                // Membuka panel manage PIC jika role-nya adalah 'admin'
+                if (activeRole === "admin") {
                     document.getElementById("adminPicManagementSection").classList.remove("hidden");
                     renderAdminPicTable();
                 } else {
@@ -270,16 +281,27 @@
 
         function handleLogout() {
             activePICUser = null;
+            activeRole = 'staff';
             document.getElementById("appContainer").classList.add("hidden");
             document.getElementById("authContainer").classList.remove("hidden");
             document.getElementById("loginForm").reset();
         }
 
-        // 4. SUPABASE TRANSACTION SYNC ENGINE
+        // 4. SUPABASE TRANSACTION SYNC ENGINE (Disesuaikan dengan tabel 'jadwal_asesor')
         async function syncFetchFromSupabase() {
-            const { data, error } = await _supabase.from('schedule_database').select('*');
+            const { data, error } = await _supabase.from('jadwal_asesor').select('*'); // Diubah sesuai nama tabel Anda
             if (!error && data) {
-                scheduleDatabase = data;
+                // Mapping jika nama kolom berbeda, sesuaikan dengan nama kolom yang di-select
+                scheduleDatabase = data.map(item => ({
+                    id: item.id,
+                    lpk_name: item.lpk_name || item.nama_lpk || "LPK Target", 
+                    asesor_id: item.asesor_id,
+                    asesor_name: item.asesor_name || item.nama_asesor || "Nama Asesor",
+                    date_start: item.date_start || item.tanggal_mulai,
+                    date_end: item.date_end || item.tanggal_selesai,
+                    status: item.status || "Dihubungi",
+                    created_by: item.created_by || "system"
+                }));
                 renderCalendar();
                 renderTable();
             }
@@ -296,15 +318,13 @@
         function filterAsesorList() {
             const keyword = document.getElementById("asesorSearchInput").value.toLowerCase();
             const filtered = masterAsesors.filter(ase => 
-                ase.name.toLowerCase().includes(keyword) || 
-                ase.skills.some(s => s.toLowerCase().includes(keyword))
+                ase.name.toLowerCase().includes(keyword)
             );
             renderBulkAsesorList(filtered);
         }
 
-        function checkConflictExists(asesorId, start, end, excludeId = null) {
+        function checkConflictExists(asesorId, start, end) {
             return scheduleDatabase.find(sch => {
-                if (excludeId && sch.id == excludeId) return false;
                 if (sch.asesor_id === parseInt(asesorId)) {
                     return (new Date(start) <= new Date(sch.date_end) && new Date(end) >= new Date(sch.date_start));
                 }
@@ -333,10 +353,12 @@
 
                 const conflict = checkConflictExists(aseId, startVal, endVal);
                 if (conflict) {
-                    alert(`🚨 Konflik Terdeteksi!\nAsesor: ${conflict.asesor_name}\nSudah terjadwal di: ${conflict.lpk_name}\nRentang: ${conflict.date_start} s/d ${conflict.date_end}`);
+                    alert(`🚨 Konflik Terdeteksi!\nAsesor: ${conflict.asesor_name}\nSudah terjadwal di: ${conflict.lpk_name}`);
                     bentrokDetected = true;
                 } else {
                     const asesorObj = masterAsesors.find(a => a.id === aseId);
+                    
+                    // Struktur data disesuaikan dengan kebutuhan database 'jadwal_asesor'
                     temporarySchedules.push({
                         lpk_name: lpkName,
                         asesor_id: aseId,
@@ -351,9 +373,9 @@
 
             if (bentrokDetected) return;
 
-            const { error } = await _supabase.from('schedule_database').insert(temporarySchedules);
+            const { error } = await _supabase.from('jadwal_asesor').insert(temporarySchedules);
             if (error) {
-                alert("Gagal menyimpan transaksi ke Supabase!");
+                alert("Gagal menyimpan transaksi ke tabel jadwal_asesor!");
                 return;
             }
 
@@ -361,7 +383,7 @@
 
             document.getElementById("bulkScheduleForm").reset();
             await syncFetchFromSupabase();
-            alert("🎉 Seluruh penugasan berhasil didaftarkan secara paralel!");
+            alert("🎉 Seluruh penugasan berhasil didaftarkan ke database!");
         }
 
         // 6. ADAPTIVE MASTER RENDER CALENDAR & TABLE
@@ -419,20 +441,19 @@
             });
 
             if(filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-xs italic text-slate-500">Tidak ditemukan logs penugasan.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-xs italic text-slate-500">Tidak ditemukan logs penugasan.</td></tr>`;
                 return;
             }
 
             filtered.forEach(sch => {
                 const badge = sch.status === "Confirm"
-                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Confirm Terjadwal</span>`
+                    ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Confirm</span>`
                     : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">Dihubungi</span>`;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-900/50 text-xs text-slate-300 transition-colors">
                         <td class="px-4 py-2.5 font-bold text-white">${sch.asesor_name}</td>
                         <td class="px-4 py-2.5">${sch.lpk_name}</td>
-                        <td class="px-4 py-2.5"><span class="bg-slate-800 px-1 rounded text-[10px]">Generalist</span></td>
                         <td class="px-4 py-2.5 font-mono text-[11px] text-slate-400">${sch.date_start} s/d ${sch.date_end}</td>
                         <td class="px-4 py-2.5 text-center font-mono text-slate-400">${sch.created_by.toUpperCase()}</td>
                         <td class="px-4 py-2.5 text-center">${badge}</td>
@@ -488,43 +509,56 @@
             });
         }
 
-        // 9. MANAGEMENT HAK AKSES PIC BY ADMIN PUSAT
+        // 9. MANAGEMENT HAK AKSES PIC (Sinkron ke tabel 'master_pic')
         async function handleCreatePic(e) {
             e.preventDefault();
             const uName = document.getElementById("newPicUsername").value.trim().toLowerCase();
             const pWord = document.getElementById("newPicPassword").value.trim();
+            const fullName = document.getElementById("newPicNamaLengkap").value.trim();
+            const selectedRole = document.getElementById("newPicRole").value;
 
-            const { error } = await _supabase.from('kan_pic_credentials').insert([{ username: uName, password: pWord }]);
-            if (error) { alert("Username sudah terdaftar atau gagal dibuat!"); return; }
+            const { error } = await _supabase.from('master_pic').insert([{ 
+                username: uName, 
+                password: pWord,
+                nama_lengkap: fullName,
+                role: selectedRole,
+                status_aktif: true
+            }]);
+            
+            if (error) { alert("Gagal mendaftarkan user baru!"); return; }
 
             document.getElementById("addPicForm").reset();
             renderAdminPicTable();
-            alert("Akun PIC sukses didaftarkan di Supabase Database!");
+            alert("User baru sukses ditambahkan ke tabel master_pic!");
         }
 
-        async function deletePicUser(username) {
-            if (confirm(`Hapus hak akses untuk PIC: ${username}?`)) {
-                await _supabase.from('kan_pic_credentials').delete().eq('username', username);
+        async function deletePicUser(id) {
+            if (confirm(`Hapus hak akses user ini?`)) {
+                await _supabase.from('master_pic').delete().eq('id', id);
                 renderAdminPicTable();
             }
         }
 
         async function renderAdminPicTable() {
             const tbody = document.getElementById("picUserTableBody"); if(!tbody) return; tbody.innerHTML = "";
-            const { data } = await _supabase.from('kan_pic_credentials').select('*');
+            const { data } = await _supabase.from('master_pic').select('*');
             if (data) {
                 data.forEach(row => {
-                    const isPusat = row.username === "pic.pusat";
-                    const btn = isPusat ? `<span class="text-slate-500 italic">Protected</span>` : `<button onclick="deletePicUser('${row.username}')" class="text-red-400 hover:text-red-500 font-bold"><i class="fa-solid fa-trash-can"></i></button>`;
-                    tbody.innerHTML += `<tr class="border-b border-slate-800"><td class="py-1 font-mono">${row.username}</td><td class="py-1 text-center">${btn}</td></tr>`;
+                    // Mencegah menghapus akun login diri sendiri
+                    const isSelf = row.username === activePICUser;
+                    const btn = isSelf ? `<span class="text-slate-500 italic">Aktif</span>` : `<button onclick="deletePicUser(${row.id})" class="text-red-400 hover:text-red-500 font-bold"><i class="fa-solid fa-trash-can"></i></button>`;
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-800 text-xs">
+                            <td class="py-1.5 font-mono">${row.username}</td>
+                            <td class="py-1.5 text-center"><span class="bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">${row.role}</span></td>
+                            <td class="py-1.5 text-center">${btn}</td>
+                        </tr>`;
                 });
             }
         }
 
         // 10. DETAIL ACTIONS MODAL CONTROL & CONFIRMATION
-        let targetSelectedScheduleId = null;
         function openEditModal(id) {
-            targetSelectedScheduleId = id;
             const item = scheduleDatabase.find(s => s.id == id);
             if(!item) return;
 
@@ -532,12 +566,12 @@
                 <p><b>Asesor:</b> ${item.asesor_name}</p>
                 <p><b>LPK Tujuan:</b> ${item.lpk_name}</p>
                 <p><b>Periode Tugas:</b> ${item.date_start} s/d ${item.date_end}</p>
-                <p><b>Current Status:</b> ${item.status}</p>
+                <p><b>Status Saat Ini:</b> ${item.status}</p>
             `;
             document.getElementById("editModal").classList.remove("hidden");
 
             document.getElementById("btnConfirmAction").onclick = async () => {
-                const { error } = await _supabase.from('schedule_database').update({ status: 'Confirm' }).eq('id', id);
+                const { error } = await _supabase.from('jadwal_asesor').update({ status: 'Confirm' }).eq('id', id);
                 if(!error) {
                     triggerNotificationGateway("CONFIRM", item);
                     closeEditModal();
@@ -546,15 +580,15 @@
             };
 
             document.getElementById("btnDeleteAction").onclick = async () => {
-                if(confirm("Hapus jadwal penugasan ini?")) {
-                    const { error } = await _supabase.from('schedule_database').delete().eq('id', id);
+                if(confirm("Hapus jadwal penugasan ini dari tabel jadwal_asesor?")) {
+                    const { error } = await _supabase.from('jadwal_asesor').delete().eq('id', id);
                     if(!error) { closeEditModal(); await syncFetchFromSupabase(); }
                 }
             };
         }
         function closeEditModal() { document.getElementById("editModal").classList.add("hidden"); }
 
-        // 11. INTERNAL RUNTIME LOG TRACKER ENGINE (TANPA WA & EMAIL)
+        // 11. INTERNAL RUNTIME LOG TRACKER ENGINE
         function triggerNotificationGateway(type, schObj) {
             const overlay = document.getElementById("notificationOverlay");
             const container = document.getElementById("notificationPayloadContent");
@@ -562,9 +596,9 @@
 
             let log = "";
             if (type === "CREATE") {
-                log = `📥 [DB INSERT SUCCESS]: Sukses mengusulkan jadwal baru.\n📍 Asesor: ${schObj.asesor_name}\n📍 Lokasi: ${schObj.lpk_name}\n📍 Rentang: ${schObj.date_start} s/d ${schObj.date_end}\n⚙️ Status awal: 'Dihubungi'.`;
+                log = `📥 [DB INSERT SUCCESS]: Jadwal baru masuk tabel 'jadwal_asesor'.\n📍 Asesor: ${schObj.asesor_name}\n📍 Lokasi: ${schObj.lpk_name}`;
             } else if (type === "CONFIRM") {
-                log = `✅ [DB UPDATE SUCCESS]: Status berhasil dimutasi!\n📍 Asesor: ${schObj.asesor_name} resmi dikonfirmasi bertugas pada klaster lembaga ${schObj.lpk_name}.`;
+                log = `✅ [DB UPDATE SUCCESS]: Status baris ID ${schObj.id} berganti jadi 'Confirm'.`;
             }
             container.innerHTML += `<div class="border-b border-slate-800 pb-2 mb-2 text-blue-400">TIMESTAMP: ${new Date().toLocaleTimeString()}<br><span class="text-slate-300">${log}</span></div>`;
             container.scrollTop = container.scrollHeight;
