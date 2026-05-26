@@ -1001,13 +1001,13 @@
 
                 } else {
 
-                    const asesorObj = fetchedMasterAsesors.find(a => a.ID_asesor === aseId);
+                    const asesorObj = fetchedMasterAsesors.find(a => a.ID_asesor == aseId); if (!asesorObj) { alert(`Asesor ID ${aseId} tidak ditemukan!`); bentrokDetected = true; return; }
 
                     temporarySchedules.push({
 
                         no_lpk: lpkName,
 
-                        asesor_id: aseId,
+                        asesor_id: parseInt(aseId),
 
                         nama_asesor: asesorObj.nama,
 
@@ -1031,7 +1031,7 @@
 
             if (error) {
 
-                alert("Gagal memproses penulisan ke database Supabase!");
+                console.error("Supabase insert error:", error); alert("Gagal INSERT ke Supabase!\n\nDetail error:\n" + (error.message || JSON.stringify(error)));
 
                 return;
 
