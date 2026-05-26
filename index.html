@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAN Smart Scheduler v4.2 - Production Base</title>
+    <title>KAN Smart Scheduler v4.3 - Production Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -34,7 +34,6 @@
             background-color: #1e3a8a; /* bg-blue-900 */
             color: #ffffff;
         }
-        /* Mengoptimalkan area klik date picker bawaan browser */
         input[type="date"] {
             cursor: pointer;
             position: relative;
@@ -62,7 +61,7 @@
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <h1 class="text-2xl font-black tracking-tight text-white">KAN Smart Scheduler</h1>
-                <p class="text-xs text-slate-400 mt-1">v4.2 Enterprise Secure Gateway</p>
+                <p class="text-xs text-slate-400 mt-1">v4.3 Enterprise Secure Gateway</p>
             </div>
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
@@ -83,7 +82,7 @@
     <div id="appContainer" class="hidden min-h-screen flex flex-col">
         <header class="bg-slate-950/60 backdrop-blur-md border-b border-slate-800 px-6 py-4 sticky top-0 z-40 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="bg-blue-600 text-white font-black text-xs px-2 py-1 rounded">KAN v4.2</span>
+                <span class="bg-blue-600 text-white font-black text-xs px-2 py-1 rounded">KAN v4.3</span>
                 <h2 class="text-lg font-bold text-white tracking-tight">Control Panel Scheduler</h2>
             </div>
             
@@ -295,20 +294,17 @@
     </div>
 
     <script>
-        // CORE DB ACCESS POINT
         const SUPABASE_URL = "https://ogubeyrmghsyzbzzohfo.supabase.co"; 
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndWJleXJtZ2hzeXpienpvaGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MDcwODYsImV4cCI6MjA5NTI4MzA4Nn0._p6GCliHPOCg8jYL9fo357AQLr20kQKH2GohXOwulsI"; 
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // RUNTIME APPS STATES
         let activePICUser = null;
         let activeRole = 'staff';
         let scheduleDatabase = [];
-        let fetchedMasterAsesors = []; // Data master_asesor ditarik dinamis dari Supabase
+        let fetchedMasterAsesors = []; // Perbaikan Awal: Diinisiasi agar tidak crash saat rendering form
         let currentCalendarDate = new Date();
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-        // --- ENGINES SECURE: VALIDATOR PORTAL VALIDASI ---
         async function handleLogin(e) {
             e.preventDefault();
             const uName = document.getElementById("loginUsername").value.trim().toLowerCase();
@@ -334,15 +330,14 @@
                 document.getElementById("appContainer").classList.remove("hidden");
                 document.getElementById("displayPicName").innerText = `PIC: ${uName.toUpperCase()} (${activeRole.toUpperCase()})`;
 
-                // Validasi kemunculan panel atas "Admin Panel (PIC)"
                 if (activeRole === "admin") {
                     document.getElementById("btnAdminPanel").classList.remove("hidden");
                 } else {
                     document.getElementById("btnAdminPanel").classList.add("hidden");
                 }
 
-                await fetchMasterAsesors(); // Tarik master data asesor dari database cloud
-                await syncFetchFromSupabase(); // Tarik data jadwal tugas utama
+                await fetchMasterAsesors(); 
+                await syncFetchFromSupabase(); 
             } catch (err) {
                 console.error(err);
                 alert("Koneksi gagal terhubung ke gerbang server Supabase!");
@@ -357,7 +352,6 @@
             document.getElementById("loginForm").reset();
         }
 
-        // --- CORE READ ENGINE: LOAD DATA MASTER & REALTIME SCHEDULE ---
         async function fetchMasterAsesors() {
             const { data, error } = await _supabase.from('master_asesor').select('id, NAMA').order('NAMA', { ascending: true });
             if (!error && data) {
@@ -384,7 +378,7 @@
             }
         }
 
-        // --- FEATURE REVISI A: LIVE AUTOCOMPLETE SEARCH INPUT TABEL MASTER LPK ---
+        // --- FIXED: PERBAIKAN STRUKTUR QUERY LPK CLOUD ---
         async function handleLpkLiveSearch() {
             const query = document.getElementById("lpkSearchInput").value.trim();
             const dropdown = document.getElementById("lpkDropdownList");
@@ -395,11 +389,10 @@
                 return;
             }
 
-            // Mencari LPK berdasarkan NAMA LABORATORIUM atau NO AKREDITASI
             const { data, error } = await _supabase
                 .from('master_lpk')
                 .select('"NO AKREDITASI", "NAMA LABORATORIUM"')
-                .or(`"NAMA LABORATORIUM".ilike.%${query}%, "NO AKREDITASI".ilike.%${query}%`)
+                .or(`NAMA LABORATORIUM.ilike.%${query}%,NO AKREDITASI.ilike.%${query}%`) // Perbaikan: Menghilangkan tanda titik typo
                 .limit(7);
 
             if (error || !data || data.length === 0) {
@@ -422,7 +415,6 @@
             dropdown.classList.remove("hidden");
         }
 
-        // --- FEATURE REVISI C: LIVE SEARCH BOX SINKRONISASI DAFTAR ASESOR ---
         function filterAsesorList() {
             const keyword = document.getElementById("asesorSearchInput").value.toLowerCase().trim();
             const filtered = fetchedMasterAsesors.filter(ase => ase.NAMA.toLowerCase().includes(keyword));
@@ -472,7 +464,6 @@
             });
         }
 
-        // --- CORE CREATE ENGINE: BATCH INSERT DATABASE JADWAL TUGAS ---
         async function handleBulkFormSubmit(e) {
             e.preventDefault();
             const lpkName = document.getElementById("selectedLpkValue").value.trim();
@@ -525,7 +516,6 @@
             alert("🎉 Hebat! Seluruh penugasan tim sukses didaftarkan ke database terpusat.");
         }
 
-        // --- POPUP MODAL CONTROL: KELOLA AKUN PIC UNTUK ADMIN (DIPINDAHKAN KE ATAS) ---
         function openAdminPicModal() {
             document.getElementById("adminPicUserModal").classList.remove("hidden");
             renderAdminPicTable();
@@ -578,7 +568,6 @@
             }
         }
 
-        // --- ENGINE RENDERER UI: VISUAL MASTER CALENDAR & LOG TABLE ---
         function renderCalendar() {
             const cellsContainer = document.getElementById("calendarCells");
             if (!cellsContainer) return; cellsContainer.innerHTML = "";
@@ -652,7 +641,6 @@
             });
         }
 
-        // --- CALENDAR MANAGEMENT HELPERS ---
         function jumpToToday() { currentCalendarDate = new Date(); updateDropdownValueIndicators(); renderCalendar(); }
         function initCalendarDropdowns() {
             const mSel = document.getElementById("calMonthSelect");
@@ -672,7 +660,6 @@
             currentCalendarDate = new Date(y, m, 1); renderCalendar();
         }
 
-        // --- EDIT POPUP DETAIL & ACTION CONTROL ---
         function openEditModal(id) {
             const item = scheduleDatabase.find(s => s.id == id);
             if(!item) return;
@@ -698,7 +685,6 @@
         }
         function closeEditModal() { document.getElementById("editModal").classList.add("hidden"); }
 
-        // --- INTERNAL LIVE RUNTIME LOG ENGINE ---
         function triggerNotificationGateway(type, schObj) {
             const overlay = document.getElementById("notificationOverlay");
             const container = document.getElementById("notificationPayloadContent");
@@ -718,14 +704,12 @@
             document.getElementById("notificationPayloadContent").innerHTML = "";
         }
 
-        // CLOSE WINDOW CLICK DISMISS DROPDOWN
         document.addEventListener("click", function(e) {
             if (!e.target.closest("#lpkSearchInput") && !e.target.closest("#lpkDropdownList")) {
                 document.getElementById("lpkDropdownList").classList.add("hidden");
             }
         });
 
-        // WINDOW ONLOAD INITIALIZER
         window.addEventListener("DOMContentLoaded", () => {
             initCalendarDropdowns();
         });
