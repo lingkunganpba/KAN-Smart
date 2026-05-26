@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAN Asesor Scheduler - Production v5.0</title>
-    <!-- Tailwind CSS untuk Interface yang Ringan & Responsive -->
+    <title>KAN Asesor Scheduler - Production v5.1</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Supabase JS Client resmi via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .autocomplete-items {
@@ -32,7 +30,6 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
 
-    <!-- 1. HALAMAN LOGIN (Ditampilkan Pertama Kali) -->
     <div id="login-page" class="flex min-h-screen items-center justify-center bg-slate-900 px-4">
         <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-xl">
             <div class="text-center mb-6">
@@ -54,9 +51,7 @@
         </div>
     </div>
 
-    <!-- 2. HALAMAN UTAMA APLIKASI (Disembunyikan Sebelum Login) -->
     <div id="main-app" class="hidden">
-        <!-- Navbar -->
         <nav class="bg-blue-900 px-6 py-4 text-white flex flex-wrap justify-between items-center shadow-md">
             <div>
                 <h1 class="text-xl font-bold">KAN SCHEDULER</h1>
@@ -67,12 +62,10 @@
 
         <div class="mx-auto max-w-7xl p-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- PANEL KIRI: FORM INPUT JADWAL (Bisa diakses Admin & Staff) -->
             <div class="lg:col-span-1 space-y-6">
                 <div class="rounded-lg bg-white p-6 shadow">
                     <h3 class="text-lg font-bold border-b pb-2 mb-4 text-slate-800">Input Penjadwalan Baru</h3>
                     <form id="schedule-form" class="space-y-4">
-                        <!-- Pencarian LPK Dinamis -->
                         <div class="relative">
                             <label class="block text-sm font-semibold text-gray-700">Cari LPK / Laboratorium</label>
                             <input type="text" id="search-lpk" placeholder="Ketik nama laboratorium..." required autocomplete="off" class="mt-1 w-full rounded border border-gray-300 p-2 focus:outline-none focus:border-blue-500">
@@ -81,14 +74,12 @@
                             <div id="lpk-autocomplete-list" class="autocomplete-items shadow-lg rounded"></div>
                         </div>
 
-                        <!-- Pencarian Asesor Dinamis -->
                         <div class="relative">
                             <label class="block text-sm font-semibold text-gray-700">Cari Nama Asesor</label>
                             <input type="text" id="search-asesor" placeholder="Ketik nama asesor..." required autocomplete="off" class="mt-1 w-full rounded border border-gray-300 p-2 focus:outline-none focus:border-blue-500">
                             <div id="asesor-autocomplete-list" class="autocomplete-items shadow-lg rounded"></div>
                         </div>
 
-                        <!-- Rentang Tanggal -->
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700">Tgl Mulai</label>
@@ -104,7 +95,6 @@
                     </form>
                 </div>
 
-                <!-- 👑 KHUSUS ADMIN PUSAT: MENU MANAJEMEN AKUN PIC -->
                 <div id="admin-management-section" class="hidden rounded-lg bg-white p-6 shadow border-t-4 border-amber-500">
                     <h3 class="text-lg font-bold border-b pb-2 mb-4 text-amber-700">👑 Manajemen Akun PIC (Khusus Admin)</h3>
                     <div id="pic-error" class="hidden mb-2 rounded bg-red-100 p-2 text-xs text-red-700"></div>
@@ -113,7 +103,7 @@
                     <form id="pic-form" class="space-y-3 text-sm">
                         <div>
                             <label class="block font-semibold text-gray-700">Username</label>
-                            <input type="text" id="pic-username" placeholder="misal: pic.surabaya" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none">
+                            <input type="text" id="pic-username" placeholder="misal: husein / danu" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none">
                         </div>
                         <div>
                             <label class="block font-semibold text-gray-700">Password</label>
@@ -124,25 +114,21 @@
                             <input type="text" id="pic-fullname" placeholder="Nama Lengkap Staff" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none">
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-700">Wilayah Tugas</label>
-                            <input type="text" id="pic-region" placeholder="SURABAYA / JAKARTA / MEDAN" required class="mt-1 w-full rounded border border-gray-300 p-1.5 uppercase focus:outline-none">
+                            <label class="block font-semibold text-gray-700">Role Akses</label>
+                            <input type="text" id="pic-role" placeholder="Ketik: admin atau staff" required class="mt-1 w-full rounded border border-gray-300 p-1.5 focus:outline-none text-lowercase">
                         </div>
                         <button type="submit" class="w-full rounded bg-amber-600 p-2 font-semibold text-white hover:bg-amber-700 transition">Buat / Update Akun PIC</button>
                     </form>
 
-                    <!-- Daftar Akun PIC Saat Ini -->
                     <div class="mt-4">
                         <p class="font-bold text-xs text-gray-500 uppercase mb-2">Daftar Akun PIC Aktif</p>
                         <div id="pic-list-container" class="max-h-40 overflow-y-auto space-y-1.5 border p-2 bg-gray-50 rounded">
-                            <!-- Data PIC dimuat dinamis -->
-                        </div>
+                            </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL KANAN: MONITORING REAL-TIME & LOG TABEL (Akses Semua PIC) -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Log Tabel Transaksi -->
                 <div class="rounded-lg bg-white p-6 shadow">
                     <h3 class="text-lg font-bold border-b pb-2 mb-4 text-slate-800">Daftar Distribusi Tugas Live (Database 3)</h3>
                     <div class="overflow-x-auto">
@@ -156,8 +142,7 @@
                                 </tr>
                             </thead>
                             <tbody id="table-jadwal-body" class="divide-y">
-                                <!-- Data ditarik otomatis dari tabel jadwal_asesor -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
@@ -166,21 +151,18 @@
         </div>
     </div>
 
-    <!-- KODE ENGINE JAVASCRIPT & SUPABASE INTEGRATION -->
     <script>
-        // --- KONFIGURASI API KEY SUPABASE ---
+        // Konfigurasi Sambungan Supabase Cloud Anda
         const SUPABASE_URL = "https://ogubeyrmghsyzbzzohfo.supabase.co"; 
         const SUPABASE_ANON_KEY = "sb_publishable_LQwhRxZ76FA7cY3ePTJ0lg_upwsnUXC"; 
 
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // State Global Aplikasi
         let currentUser = null;
 
-        // --- SISTEM AUTENTIKASI (LOGIN OPSI B) ---
+        // --- ENGINE PROSES LOGIN ---
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const usernameInput = document.getElementById('login-username').value.trim();
+            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
             const passwordInput = document.getElementById('login-password').value;
             const btnLogin = document.getElementById('btn-login');
             const errorDiv = document.getElementById('login-error');
@@ -190,7 +172,6 @@
             errorDiv.classList.add('hidden');
 
             try {
-                // Tembak langsung ke tabel master_pic live
                 const { data, error } = await supabase
                     .from('master_pic')
                     .select('*')
@@ -200,10 +181,9 @@
                     .single();
 
                 if (error || !data) {
-                    throw new Error("Username atau Password salah / Akun nonaktif.");
+                    throw new Error("Username/Password salah atau kolom 'role' belum diisi di Supabase.");
                 }
 
-                // Login Berhasil
                 currentUser = data;
                 initApp();
 
@@ -218,17 +198,16 @@
         function initApp() {
             document.getElementById('login-page').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('user-info-display').innerText = `PIC Berjalan: ${currentUser.nama_lengkap} | Role: ${currentUser.wilayah_tugas}`;
+            document.getElementById('user-info-display').innerText = `PIC Berjalan: ${currentUser.nama_lengkap} | Role: ${currentUser.role.toUpperCase()}`;
 
-            // 👑 HAK AKSES ROLE: Tampilkan Menu Manajemen Akun HANYA jika wilayah_tugas = PUSAT
-            if (currentUser.wilayah_tugas === 'PUSAT') {
+            // Pengecekan Hak Akses Berdasarkan Kolom 'role'
+            if (currentUser.role === 'admin') {
                 document.getElementById('admin-management-section').classList.remove('hidden');
-                loadAllPIC(); // Muat daftar PIC khusus Admin
+                loadAllPIC(); 
             } else {
                 document.getElementById('admin-management-section').classList.add('hidden');
             }
 
-            // Jalankan Fitur Autocomplete Pencarian & Muat Tabel Jadwal
             setupAutocompleteLPK();
             setupAutocompleteAsesor();
             loadLiveJadwal();
@@ -244,37 +223,42 @@
             document.getElementById('btn-login').innerText = "Masuk Sistem";
         }
 
-        // --- DIKENDALIKAN ADMIN: FITUR MANAJEMEN AKUN PIC (BUAT / UPDATE PASSWORD STAFF) ---
+        // --- SISTEM PEMBUATAN & REVISI AKUN PIC OLEH ADMIN ---
         document.getElementById('pic-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('pic-username').value.trim().toLowerCase();
             const password = document.getElementById('pic-password').value;
             const nama_lengkap = document.getElementById('pic-fullname').value;
-            const wilayah_tugas = document.getElementById('pic-region').value.toUpperCase().trim();
+            const role_akses = document.getElementById('pic-role').value.toLowerCase().trim();
             
             const errDiv = document.getElementById('pic-error');
             const succDiv = document.getElementById('pic-success');
             errDiv.classList.add('hidden');
             succDiv.classList.add('hidden');
 
+            if (role_akses !== 'admin' && role_akses !== 'staff') {
+                errDiv.innerText = "Gagal: Isian Role harus ditulis 'admin' atau 'staff'!";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
             try {
-                // Gunakan upsert: Jika username sudah ada, dia akan UPDATE password/data, jika belum ada akan INSERT baru
                 const { error } = await supabase
                     .from('master_pic')
                     .upsert({ 
                         username: username, 
                         password: password, 
                         nama_lengkap: nama_lengkap, 
-                        wilayah_tugas: wilayah_tugas,
+                        role: role_akses,
                         status_aktif: true
                     }, { onConflict: 'username' });
 
                 if (error) throw error;
 
-                succDiv.innerText = `Akun PIC @${username} Berhasil Dibuat/Diperbarui!`;
+                succDiv.innerText = `Akun @${username} Berhasil Disimpan/Diperbarui!`;
                 succDiv.classList.remove('hidden');
                 document.getElementById('pic-form').reset();
-                loadAllPIC(); // Refresh list
+                loadAllPIC();
 
             } catch (err) {
                 errDiv.innerText = "Gagal memproses akun: " + err.message;
@@ -293,7 +277,7 @@
                 item.className = "text-xs p-1.5 bg-white border rounded flex justify-between items-center";
                 item.innerHTML = `
                     <div>
-                        <strong class="text-blue-800">@${p.username}</strong> (${p.wilayah_tugas})
+                        <strong class="text-blue-800">@${p.username}</strong> (${p.role || 'belum diatur'})
                         <div class="text-gray-400">Pass: ${p.password}</div>
                     </div>
                     <span class="px-1.5 py-0.5 rounded text-[10px] bg-green-100 text-green-800 font-bold">Aktif</span>
@@ -302,8 +286,7 @@
             });
         }
 
-
-        // --- ENGINE PENCARIAN OTOMATIS (AUTOCOMPLETE TABEL MASTER LPK) ---
+        // --- AUTOCOMPLETE: PENCARIAN LIVE MASTER LPK ---
         function setupAutocompleteLPK() {
             const input = document.getElementById('search-lpk');
             const listContainer = document.getElementById('lpk-autocomplete-list');
@@ -313,10 +296,9 @@
                 listContainer.innerHTML = "";
                 if (!val || val.length < 2) return;
 
-                // Cari data langsung dari tabel master_lpk kolom NAMA LABORATORIUM
                 const { data, error } = await supabase
                     .from('master_lpk')
-                    .select('NO AKREDITASI, NAMA LABORATORIUM')
+                    .select('"NO AKREDITASI", "NAMA LABORATORIUM"')
                     .ilike('NAMA LABORATORIUM', `%${val}%`)
                     .limit(7);
 
@@ -327,7 +309,7 @@
                     b.innerHTML = `<strong>${row['NO AKREDITASI'] || '-'}</strong> - ${row['NAMA LABORATORIUM']}`;
                     b.addEventListener("click", function() {
                         input.value = row['NAMA LABORATORIUM'];
-                        document.getElementById('selected-no-lpk').value = row['NO AKREDITASI'];
+                        document.getElementById('selected-no-lpk').value = row['NO AKREDITASI'] || 'REG-UNKNOWN';
                         document.getElementById('selected-nama-lpk').value = row['NAMA LABORATORIUM'];
                         listContainer.innerHTML = "";
                     });
@@ -336,7 +318,7 @@
             });
         }
 
-        // --- ENGINE PENCARIAN OTOMATIS (AUTOCOMPLETE TABEL MASTER ASESOR) ---
+        // --- AUTOCOMPLETE: PENCARIAN LIVE MASTER ASESOR ---
         function setupAutocompleteAsesor() {
             const input = document.getElementById('search-asesor');
             const listContainer = document.getElementById('asesor-autocomplete-list');
@@ -346,7 +328,6 @@
                 listContainer.innerHTML = "";
                 if (!val || val.length < 2) return;
 
-                // Cari data langsung dari tabel master_asesor kolom NAMA
                 const { data, error } = await supabase
                     .from('master_asesor')
                     .select('NAMA')
@@ -367,12 +348,11 @@
             });
         }
 
-        // --- PROSES SIMPAN TRANSAKSI JADWAL (ANTI DOUBLE-CLICK UNTUK 100 USER) ---
+        // --- SIMPAN TRANSAKSI JADWAL (ANTI DOUBLE CLICK) ---
         document.getElementById('schedule-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnSave = document.getElementById('btn-save-schedule');
             
-            // Kunci tombol biar tidak tertekan dua kali oleh user
             btnSave.disabled = true;
             btnSave.innerText = "Mengunci & Menyimpan...";
 
@@ -391,7 +371,7 @@
                         nama_asesor: namaAsesor,
                         tanggal_mulai: tglMulai,
                         tanggal_selesai: tglSelesai,
-                        created_by: currentUser.username // Mencatat otomatis siapa PIC yang input
+                        created_by: currentUser.username
                     }]);
 
                 if (error) throw error;
@@ -407,7 +387,7 @@
             }
         });
 
-        // --- MUAT DATA JADWAL & SYSTEM STREAMING REAL-TIME ---
+        // --- STREAMING LIVE DATA JADWAL ---
         async function loadLiveJadwal() {
             const tbody = document.getElementById('table-jadwal-body');
             const { data, error } = await supabase
@@ -437,17 +417,15 @@
             });
         }
 
-        // Berlangganan Stream WebSocket Supabase (100 user sinkron tanpa reload)
         function listenRealtimeJadwal() {
             supabase
                 .channel('schema-db-changes')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'jadwal_asesor' }, (payload) => {
-                    loadLiveJadwal(); // Ambil ulang data otomatis jika ada PIC lain yang klik simpan
+                    loadLiveJadwal();
                 })
                 .subscribe();
         }
 
-        // Menutup autocomplete jika mengklik luar layar
         document.addEventListener("click", function (e) {
             if (e.target.id !== 'search-lpk') document.getElementById('lpk-autocomplete-list').innerHTML = "";
             if (e.target.id !== 'search-asesor') document.getElementById('asesor-autocomplete-list').innerHTML = "";
