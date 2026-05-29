@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAN Smart Scheduler v4.4 - Light Theme</title>
+    <title>KAN Smart Scheduler v4.5 - Light Theme</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -38,7 +38,7 @@
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <h1 class="text-2xl font-black tracking-tight text-slate-900">KAN Smart Scheduler</h1>
-                <p class="text-xs text-slate-500 mt-1">v4.4 Light Edition</p>
+                <p class="text-xs text-slate-500 mt-1">v4.5 Light Edition</p>
             </div>
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
@@ -59,7 +59,7 @@
     <div id="appContainer" class="hidden min-h-screen flex flex-col">
         <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 sticky top-0 z-40 flex justify-between items-center shadow-sm">
             <div class="flex items-center gap-3">
-                <span class="bg-blue-600 text-white font-black text-xs px-2 py-1 rounded">KAN v4.4</span>
+                <span class="bg-blue-600 text-white font-black text-xs px-2 py-1 rounded">KAN v4.5</span>
                 <h2 class="text-lg font-bold text-slate-800 tracking-tight">Control Panel Scheduler</h2>
             </div>
             <div class="flex items-center gap-3">
@@ -87,7 +87,7 @@
                                 <label class="block text-[11px] font-bold text-slate-500 mb-1">Target LPK Lembaga (Live Search)</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                    <input type="text" id="lpkSearchInput" oninput="handleLpkLiveSearch()" placeholder="Ketik nomor registrasi atau nama laboratorium..." required class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 focus:outline-none focus:border-blue-500" autocomplete="off">
+                                    <input type="text" id="lpkSearchInput" oninput="handleLpkLiveSearch()" placeholder="Ketik nomor registrasi atau nama lab..." required class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 focus:outline-none focus:border-blue-500" autocomplete="off">
                                 </div>
                                 <input type="hidden" id="selectedLpkValue">
                                 <input type="hidden" id="selectedNoLpkValue">
@@ -186,30 +186,106 @@
                 <div class="mb-6">
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Database Master</h3>
                     <div class="space-y-1">
-                        <button onclick="alert('Fitur Edit Database Asesor (Mockup Mode)')" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100">
+                        <button onclick="openAsesorModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100 cursor-pointer">
                             <i class="fa-solid fa-users w-5 text-center mr-1"></i> Data Asesor
                         </button>
-                        <button onclick="alert('Fitur Edit Database LPK (Mockup Mode)')" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100">
+                        <button onclick="openLpkModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100 cursor-pointer">
                             <i class="fa-solid fa-building w-5 text-center mr-1"></i> Data LPK Target
-                        </button>
-                        <button onclick="openAdminPicModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100">
-                            <i class="fa-solid fa-user-gear w-5 text-center mr-1"></i> Manajemen Akun PIC
                         </button>
                     </div>
                 </div>
 
-                <div id="adminLogMenu" class="hidden mb-6 border-t border-slate-200 pt-5">
+                <div id="adminToolsMenu" class="hidden mb-6 border-t border-slate-200 pt-5">
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
                         Admin Tools 
                         <span class="bg-amber-100 text-amber-700 text-[9px] px-1.5 py-0.5 rounded">Admin Only</span>
                     </h3>
                     <div class="space-y-1">
-                        <button onclick="openAdminLogModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors border border-transparent hover:border-amber-200 flex justify-between items-center">
+                        <button onclick="openAdminPicModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors border border-transparent hover:border-amber-200 flex justify-between items-center cursor-pointer">
+                            <span><i class="fa-solid fa-user-gear w-5 text-center mr-1"></i> Manajemen Akun PIC</span>
+                        </button>
+                        <button onclick="openAdminLogModal()" class="w-full text-left px-3 py-2 text-sm text-slate-700 font-semibold hover:bg-amber-50 hover:text-amber-700 rounded-lg transition-colors border border-transparent hover:border-amber-200 flex justify-between items-center cursor-pointer">
                             <span><i class="fa-solid fa-clipboard-list w-5 text-center mr-1"></i> Log Aktivitas PIC</span>
                         </button>
                     </div>
                 </div>
             </aside>
+        </div>
+    </div>
+
+    <div id="masterAsesorModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-users text-blue-600"></i> Master Data Asesor
+                </h3>
+                <button onclick="closeAsesorModal()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">&times;</button>
+            </div>
+            <div class="overflow-y-auto space-y-4 pr-1 no-scrollbar">
+                <form id="addAsesorForm" onsubmit="handleAddAsesor(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex gap-2 items-end">
+                    <div class="flex-1">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Asesor Baru</label>
+                        <input type="text" id="newAsesorName" required placeholder="Budi Santoso..." class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800">
+                    </div>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs p-2.5 rounded-lg cursor-pointer transition shadow-sm">
+                        + Tambah
+                    </button>
+                </form>
+                <div>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                                    <th class="px-4 py-2">ID</th>
+                                    <th class="px-4 py-2">Nama Lengkap Asesor</th>
+                                    <th class="px-4 py-2 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="asesorTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="masterLpkModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-building text-blue-600"></i> Master Data LPK Target
+                </h3>
+                <button onclick="closeLpkModal()" class="text-slate-400 hover:text-slate-700 text-lg cursor-pointer">&times;</button>
+            </div>
+            <div class="overflow-y-auto space-y-4 pr-1 no-scrollbar">
+                <form id="addLpkForm" onsubmit="handleAddLpk(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-5 gap-2 items-end">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">No Akreditasi</label>
+                        <input type="text" id="newLpkNo" required placeholder="LP-XXX-IDN" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nama Laboratorium LPK</label>
+                        <input type="text" id="newLpkName" required placeholder="PT Lab Maju Bersama" class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-800">
+                    </div>
+                    <button type="submit" class="col-span-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs p-2.5 rounded-lg cursor-pointer transition shadow-sm w-full">
+                        + Tambah
+                    </button>
+                </form>
+                <div>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden bg-white max-h-[300px] overflow-y-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="sticky top-0 bg-slate-50">
+                                <tr class="border-b border-slate-200 text-slate-600 font-bold">
+                                    <th class="px-4 py-2">No Akreditasi</th>
+                                    <th class="px-4 py-2">Nama Laboratorium</th>
+                                    <th class="px-4 py-2 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lpkTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -231,13 +307,12 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
                             <th class="px-4 py-3">ID Log</th>
-                            <th class="px-4 py-3">PIC</th>
-                            <th class="px-4 py-3">Aktivitas Terbaru</th>
+                            <th class="px-4 py-3">PIC Aktif</th>
+                            <th class="px-4 py-3">Aktivitas Terakhir</th>
                             <th class="px-4 py-3">Detail Penugasan</th>
                         </tr>
                     </thead>
-                    <tbody id="adminLogTableBody" class="divide-y divide-slate-100">
-                        </tbody>
+                    <tbody id="adminLogTableBody" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
         </div>
@@ -336,11 +411,20 @@
         let selectedAsesorIds = new Set();
         let asesorDates = new Map();
         
-        // State for Table Sorting
         let currentSortCol = 'date_start';
         let currentSortDir = 'asc';
 
         const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        
+        // Data Hari Libur Nasional & Cuti Bersama (2024 - 2026)
+        const indonesianHolidays = {
+            // 2024
+            "2024-01-01": "Tahun Baru Masehi", "2024-02-08": "Isra Mikraj", "2024-02-09": "Cuti Bersama Imlek", "2024-02-10": "Tahun Baru Imlek", "2024-03-11": "Hari Suci Nyepi", "2024-03-12": "Cuti Bersama Nyepi", "2024-03-29": "Wafat Yesus Kristus", "2024-04-10": "Idul Fitri", "2024-04-11": "Idul Fitri", "2024-04-08": "Cuti Bersama", "2024-04-09": "Cuti Bersama", "2024-04-12": "Cuti Bersama", "2024-04-15": "Cuti Bersama", "2024-05-01": "Hari Buruh", "2024-05-09": "Kenaikan Yesus", "2024-05-10": "Cuti Bersama", "2024-05-23": "Waisak", "2024-05-24": "Cuti Bersama", "2024-06-01": "Lahir Pancasila", "2024-06-17": "Idul Adha", "2024-06-18": "Cuti Bersama", "2024-07-07": "Tahun Baru Islam", "2024-08-17": "Kemerdekaan RI", "2024-09-16": "Maulid Nabi", "2024-12-25": "Hari Natal", "2024-12-26": "Cuti Bersama",
+            // 2025
+            "2025-01-01": "Tahun Baru Masehi", "2025-01-27": "Isra Mikraj", "2025-01-29": "Tahun Baru Imlek", "2025-03-29": "Hari Raya Idul Fitri", "2025-03-30": "Hari Raya Idul Fitri", "2025-04-18": "Wafat Isa Almasih", "2025-05-01": "Hari Buruh", "2025-05-12": "Hari Raya Waisak", "2025-05-29": "Kenaikan Isa Almasih", "2025-06-01": "Lahir Pancasila", "2025-06-06": "Idul Adha", "2025-06-27": "Tahun Baru Islam", "2025-08-17": "Kemerdekaan RI", "2025-09-05": "Maulid Nabi", "2025-12-25": "Hari Raya Natal",
+            // 2026
+            "2026-01-01": "Tahun Baru Masehi", "2026-02-17": "Tahun Baru Imlek", "2026-03-19": "Idul Fitri", "2026-03-20": "Idul Fitri", "2026-04-03": "Wafat Isa Almasih", "2026-05-01": "Hari Buruh", "2026-05-14": "Kenaikan Isa Almasih", "2026-05-27": "Idul Adha", "2026-05-31": "Waisak", "2026-06-01": "Lahir Pancasila", "2026-06-16": "Tahun Baru Islam", "2026-08-17": "Kemerdekaan RI", "2026-08-25": "Maulid Nabi", "2026-12-25": "Hari Raya Natal"
+        };
 
         // ==========================================
         // AUTO LOGIN / PERSISTENCE (LocalStorage)
@@ -372,7 +456,6 @@
                 activePICUser = uName;
                 activeRole = data.role;
                 
-                // Simpan Sesi
                 localStorage.setItem('kan_session', JSON.stringify({ user: activePICUser, role: activeRole }));
                 
                 executeLoginUI();
@@ -388,16 +471,16 @@
             document.getElementById("appContainer").classList.remove("hidden");
             document.getElementById("displayPicName").innerText = `PIC: ${activePICUser.toUpperCase()} (${activeRole.toUpperCase()})`;
             
-            // Tampilkan menu Admin Log jika role admin
+            // Tampilkan menu Admin Tools jika role admin
             if (activeRole === "admin") {
-                document.getElementById("adminLogMenu").classList.remove("hidden");
+                document.getElementById("adminToolsMenu").classList.remove("hidden");
             } else {
-                document.getElementById("adminLogMenu").classList.add("hidden");
+                document.getElementById("adminToolsMenu").classList.add("hidden");
             }
         }
 
         function handleLogout() {
-            localStorage.removeItem('kan_session'); // Hapus sesi
+            localStorage.removeItem('kan_session'); 
             activePICUser = null;
             activeRole = 'staff';
             document.getElementById("appContainer").classList.add("hidden");
@@ -406,22 +489,95 @@
         }
 
         // ==========================================
-        // FITUR LOG AKTIVITAS (ADMIN)
+        // FITUR CRUD ASESOR (ALL ROLES)
         // ==========================================
-        function openAdminLogModal() {
-            document.getElementById("adminLogModal").classList.remove("hidden");
-            fetchAdminLogs();
+        function openAsesorModal() { document.getElementById("masterAsesorModal").classList.remove("hidden"); renderAsesorTable(); }
+        function closeAsesorModal() { document.getElementById("masterAsesorModal").classList.add("hidden"); }
+        
+        async function renderAsesorTable() {
+            const tbody = document.getElementById("asesorTableBody");
+            tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</td></tr>`;
+            const { data } = await _supabase.from('master_asesor').select('ID_asesor, nama').order('ID_asesor', { ascending: false });
+            if (data) {
+                tbody.innerHTML = data.map(row => `
+                    <tr class="text-slate-700">
+                        <td class="px-4 py-2 font-mono text-[10px]">${row.ID_asesor}</td>
+                        <td class="px-4 py-2 font-semibold">${row.nama}</td>
+                        <td class="px-4 py-2 text-center">
+                            <button onclick="deleteAsesor(${row.ID_asesor})" class="text-red-500 hover:text-red-600 font-bold cursor-pointer transition"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                        </td>
+                    </tr>`).join('');
+            }
+        }
+        
+        async function handleAddAsesor(e) {
+            e.preventDefault();
+            const nama = document.getElementById("newAsesorName").value.trim();
+            const { error } = await _supabase.from('master_asesor').insert([{ nama }]);
+            if (error) { alert("Gagal menambah asesor."); return; }
+            document.getElementById("addAsesorForm").reset();
+            await fetchMasterAsesors(); 
+            renderAsesorTable();
         }
 
-        function closeAdminLogModal() {
-            document.getElementById("adminLogModal").classList.add("hidden");
+        async function deleteAsesor(id) {
+            if (confirm(`Hapus permanen asesor dengan ID ${id}?`)) {
+                await _supabase.from('master_asesor').delete().eq('ID_asesor', id);
+                await fetchMasterAsesors();
+                renderAsesorTable();
+            }
         }
+
+        // ==========================================
+        // FITUR CRUD LPK (ALL ROLES)
+        // ==========================================
+        function openLpkModal() { document.getElementById("masterLpkModal").classList.remove("hidden"); renderLpkTable(); }
+        function closeLpkModal() { document.getElementById("masterLpkModal").classList.add("hidden"); }
+
+        async function renderLpkTable() {
+            const tbody = document.getElementById("lpkTableBody");
+            tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</td></tr>`;
+            const { data } = await _supabase.from('master_lpk').select('"NO AKREDITASI", "NAMA LABORATORIUM"').limit(100);
+            if (data) {
+                tbody.innerHTML = data.map(row => `
+                    <tr class="text-slate-700">
+                        <td class="px-4 py-2 font-mono text-[10px] font-bold">${row['NO AKREDITASI'] || '-'}</td>
+                        <td class="px-4 py-2">${row['NAMA LABORATORIUM']}</td>
+                        <td class="px-4 py-2 text-center">
+                            <button onclick="deleteLpk('${row['NO AKREDITASI']}')" class="text-red-500 hover:text-red-600 font-bold cursor-pointer transition"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                        </td>
+                    </tr>`).join('');
+            }
+        }
+
+        async function handleAddLpk(e) {
+            e.preventDefault();
+            const noAkre = document.getElementById("newLpkNo").value.trim();
+            const namaLab = document.getElementById("newLpkName").value.trim();
+            const { error } = await _supabase.from('master_lpk').insert([{ "NO AKREDITASI": noAkre, "NAMA LABORATORIUM": namaLab }]);
+            if (error) { alert("Gagal menambah LPK. Pastikan No Akreditasi unik."); return; }
+            document.getElementById("addLpkForm").reset();
+            renderLpkTable();
+        }
+
+        async function deleteLpk(noAkre) {
+            if (!noAkre || noAkre === 'null') { alert("Data LPK ini tidak memiliki No Akreditasi valid untuk dihapus."); return; }
+            if (confirm(`Hapus permanen LPK dengan No Akreditasi ${noAkre}?`)) {
+                await _supabase.from('master_lpk').delete().eq('NO AKREDITASI', noAkre);
+                renderLpkTable();
+            }
+        }
+
+        // ==========================================
+        // FITUR LOG AKTIVITAS (ADMIN)
+        // ==========================================
+        function openAdminLogModal() { document.getElementById("adminLogModal").classList.remove("hidden"); fetchAdminLogs(); }
+        function closeAdminLogModal() { document.getElementById("adminLogModal").classList.add("hidden"); }
 
         async function fetchAdminLogs() {
             const tbody = document.getElementById("adminLogTableBody");
             tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> Memuat data log...</td></tr>`;
             
-            // Mengambil data aktivitas dari tabel jadwal sebagai representasi log
             const { data, error } = await _supabase.from('jadwal_asesor').select('*').order('id', { ascending: false }).limit(20);
             
             if (error || !data) {
@@ -600,7 +756,6 @@
             
             let temporarySchedules = [], bentrokDetected = false;
             selectedAsesorIds.forEach(aseId => {
-                const savedDates = asesorDates.get(aseId) || {};
                 const domStart = document.getElementById(`start-ase-${aseId}`);
                 const domEnd = document.getElementById(`end-ase-${aseId}`);
                 if (domStart && domStart.value) saveAsesorDate(aseId, 'start', domStart.value);
@@ -609,7 +764,7 @@
                 const startVal = (asesorDates.get(aseId) || {}).start || '';
                 const endVal = (asesorDates.get(aseId) || {}).end || '';
                 
-                if (!startVal || !endVal) { alert(`Tanggal tugas belum lengkap! Klik kotak kalender pada asesor.`); bentrokDetected = true; return; }
+                if (!startVal || !endVal) { alert(`Tanggal tugas belum lengkap!`); bentrokDetected = true; return; }
                 if (new Date(startVal) > new Date(endVal)) { alert(`Tanggal pelaksanaan terbalik!`); bentrokDetected = true; return; }
                 
                 const conflict = checkConflictExists(aseId, startVal, endVal);
@@ -618,7 +773,7 @@
                     bentrokDetected = true;
                 } else {
                     const asesorObj = fetchedMasterAsesors.find(a => a.ID_asesor == aseId); 
-                    if (!asesorObj) { alert(`Asesor ID ${aseId} tidak ditemukan!`); bentrokDetected = true; return; }
+                    if (!asesorObj) { alert(`Asesor tidak ditemukan!`); bentrokDetected = true; return; }
                     temporarySchedules.push({
                         no_lpk: document.getElementById("selectedNoLpkValue").value, nama_lpk: lpkName,
                         asesor_id: parseInt(aseId), nama_asesor: asesorObj.nama,
@@ -630,10 +785,7 @@
             if (bentrokDetected) return;
             
             const { error } = await _supabase.from('jadwal_asesor').insert(temporarySchedules);
-            if (error) {
-                console.error("Supabase insert error:", error); alert("Gagal INSERT ke Supabase!\n\nDetail error:\n" + (error.message || JSON.stringify(error)));
-                return;
-            }
+            if (error) { alert("Gagal menyimpan jadwal ke database."); return; }
             
             temporarySchedules.forEach(sch => triggerNotificationGateway("CREATE", sch));
             document.getElementById("bulkScheduleForm").reset();
@@ -644,7 +796,7 @@
         }
 
         // ==========================================
-        // FITUR KALENDER & HIGHLIGHT HARI INI
+        // FITUR KALENDER & HARI LIBUR
         // ==========================================
         function renderCalendar() {
             const cellsContainer = document.getElementById("calendarCells");
@@ -654,7 +806,6 @@
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
             
-            // Logika format Hari Ini
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -675,15 +826,33 @@
                     }
                 });
                 
-                // Cek apakah tanggal sel kalender sama dengan tanggal sistem hari ini
+                // Cek Hari Libur atau Hari Minggu
                 const isToday = currentStr === todayStr;
-                const cellClasses = isToday ? "border-2 border-blue-500 bg-blue-50 shadow-sm" : "bg-white border border-slate-200";
-                const dayTextClasses = isToday ? "text-blue-700 font-black" : "text-slate-500 font-bold";
+                const isSunday = new Date(year, month, day).getDay() === 0;
+                const holidayName = indonesianHolidays[currentStr];
+                
+                let cellClasses = "bg-white border border-slate-200";
+                let dayTextClasses = "text-slate-500 font-bold";
+                let holidayLabel = "";
+
+                if (isToday) {
+                    cellClasses = "border-2 border-blue-500 bg-blue-50 shadow-sm";
+                    dayTextClasses = "text-blue-700 font-black";
+                } else if (holidayName || isSunday) {
+                    cellClasses = "bg-red-50 border border-red-100";
+                    dayTextClasses = "text-red-600 font-bold";
+                    if (holidayName) {
+                        holidayLabel = `<div class="text-[8px] text-red-500 font-semibold truncate leading-tight mt-0.5" title="${holidayName}">${holidayName}</div>`;
+                    }
+                }
 
                 cellsContainer.innerHTML += `
-                <div class="${cellClasses} p-1 flex flex-col justify-between rounded-lg min-h-[70px]">
-                    <span class="text-[10px] font-mono ${dayTextClasses}">${day}</span>
-                    <div class="overflow-y-auto space-y-0.5 flex-1 max-h-[50px] no-scrollbar">${assignmentsHtml}</div>
+                <div class="${cellClasses} p-1 flex flex-col rounded-lg min-h-[70px]">
+                    <div class="flex justify-between items-start">
+                        <span class="text-[10px] font-mono ${dayTextClasses}">${day}</span>
+                    </div>
+                    ${holidayLabel}
+                    <div class="overflow-y-auto space-y-0.5 flex-1 max-h-[45px] no-scrollbar mt-1">${assignmentsHtml}</div>
                 </div>`;
             }
         }
@@ -692,12 +861,8 @@
         // FITUR PENGURUTAN TABEL LOG
         // ==========================================
         function sortLog(column) {
-            if (currentSortCol === column) {
-                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortCol = column;
-                currentSortDir = 'asc';
-            }
+            if (currentSortCol === column) { currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc'; } 
+            else { currentSortCol = column; currentSortDir = 'asc'; }
             renderTable();
         }
 
@@ -715,7 +880,6 @@
                 return mAA && mLL && mWW;
             });
             
-            // Logika Pengurutan Kolom Array
             filtered.sort((a, b) => {
                 let valA = String(a[currentSortCol]).toLowerCase();
                 let valB = String(b[currentSortCol]).toLowerCase();
@@ -779,17 +943,13 @@
             const pWord = document.getElementById("newPicPassword").value.trim();
             const fullName = document.getElementById("newPicNamaLengkap").value.trim();
             const selectedRole = document.getElementById("newPicRole").value;
-            const { error } = await _supabase.from('master_pic').insert([{
-                username: uName, password: pWord, nama_lengkap: fullName, role: selectedRole, status_aktif: true
-            }]);
-            if (error) { alert("Gagal membuat akun! Kemungkinan username sudah terpakai."); return; }
-            document.getElementById("addPicForm").reset(); renderAdminPicTable();
-            alert("Akun PIC baru sukses dikunci dan disimpan ke database master_pic!");
+            const { error } = await _supabase.from('master_pic').insert([{ username: uName, password: pWord, nama_lengkap: fullName, role: selectedRole, status_aktif: true }]);
+            if (error) { alert("Gagal membuat akun!"); return; }
+            document.getElementById("addPicForm").reset(); renderAdminPicTable(); alert("Akun PIC baru sukses disimpan!");
         }
         async function deletePicUser(id) {
-            if (confirm(`Apakah Anda yakin ingin mencabut permanen hak akses akun PIC ini?`)) {
-                await _supabase.from('master_pic').delete().eq('id', id);
-                renderAdminPicTable();
+            if (confirm(`Cabut permanen hak akses akun PIC ini?`)) {
+                await _supabase.from('master_pic').delete().eq('id', id); renderAdminPicTable();
             }
         }
         async function renderAdminPicTable() {
@@ -836,13 +996,8 @@
             const overlay = document.getElementById("notificationOverlay");
             const container = document.getElementById("notificationPayloadContent");
             overlay.classList.remove("hidden");
-            let log = "";
-            if (type === "CREATE") {
-                log = `📥 [DB INSERT SUCCESS]: Sukses menginput data baru ke tabel 'jadwal_asesor'.\n📍 Target: ${schObj.nama_lpk}\n📍 Asesor: ${schObj.nama_asesor}`;
-            } else if (type === "CONFIRM") {
-                log = `✅ [DB UPDATE SUCCESS]: Status Baris Tugas ID ${schObj.id} dimutasi menjadi 'Confirm'.`;
-            }
-            container.innerHTML += `<div class="border-b border-slate-100 pb-2 mb-2 text-blue-700">TIMESTAMP: ${new Date().toLocaleTimeString()}<br><span class="text-slate-600">${log}</span></div>`;
+            let log = type === "CREATE" ? `📥 [INSERT]: Target ${schObj.nama_lpk} | Asesor: ${schObj.nama_asesor}` : `✅ [UPDATE]: Status ID ${schObj.id} -> Confirm`;
+            container.innerHTML += `<div class="border-b border-slate-100 pb-2 mb-2 text-blue-700">WAKTU: ${new Date().toLocaleTimeString()}<br><span class="text-slate-600">${log}</span></div>`;
             container.scrollTop = container.scrollHeight;
         }
         function closeNotificationOverlay() { document.getElementById("notificationOverlay").classList.add("hidden"); document.getElementById("notificationPayloadContent").innerHTML = ""; }
